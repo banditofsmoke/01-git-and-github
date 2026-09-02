@@ -19,14 +19,19 @@ the merge conflict.
 
 - **A live sandbox.** Type `git init`, `add`, `commit`, `push`, `diff`, `restore` into a fake
   terminal and watch a file move between the four places a change can live. Real Git output.
-- **A live commit graph** beside it, showing `main` and `origin/main` as two pointers into a
-  chain — so "ahead by 2", a rejected push, and a genuine fork stop being abstract.
+- **Branches in the sandbox** — `switch -c`, `merge`, `branch -d`. Commits form a real DAG, so
+  ancestry decides fast-forward vs merge commit, `-d` refuses an unmerged branch, and switching
+  with uncommitted changes is refused exactly as Git refuses it.
+- **A live commit graph** beside it, showing `main`, `origin/main` and every branch as pointers
+  into that DAG — so "ahead by 2", a rejected push, and a genuine fork stop being abstract.
+- **A nine-task practical exam.** Graded on the repository's actual state, not on what was typed,
+  so any correct route works and there is no way to pass by copying a string.
 - **A merge-vs-rebase visualiser** where the commit IDs visibly change on rebase — the detail
   that makes "rewriting history" finally click.
 - **A clickable conflict block** showing that `<<<<<<< HEAD` means *opposite things* in a merge
   and in a rebase, which is how people end up deleting their own work.
 - Per-OS commands (Windows / macOS / Linux), a table of the errors beginners actually hit,
-  54 filterable commands, and a quiz.
+  53 filterable commands, and a quiz.
 
 ## Running it yourself
 
@@ -52,7 +57,7 @@ The sandbox is a pure state machine with no DOM access, so it can be tested dire
 node test.js
 ```
 
-35 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
+62 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
 and extracts the engine from between the `==GIT-ENGINE-START==` / `==GIT-ENGINE-END==`
 sentinels, which keeps the page a single self-contained file you can still open from disk.
 

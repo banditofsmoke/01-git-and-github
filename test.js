@@ -288,6 +288,154 @@ describe('when GitHub is ahead of you', () => {
   });
 });
 
+describe('branches', () => {
+  it('needs a commit before you can branch', () => {
+    const g = fresh(); g.exec('git init'); g.editFile();
+    const r = g.exec('git switch -c feature');
+    eq(r.ok, false); includes(r.lines, 'must commit something');
+  });
+  it('switch -c creates one and moves you onto it', () => {
+    const g = committed();
+    const r = g.exec('git switch -c feature');
+    ok(r.ok); includes(r.lines, "Switched to a new branch 'feature'");
+    eq(g.snapshot().branch, 'feature', 'branch');
+  });
+  it('git checkout -b is accepted as the old spelling', () => {
+    const g = committed();
+    ok(g.exec('git checkout -b feature').ok);
+    eq(g.snapshot().branch, 'feature', 'branch');
+  });
+  it('refuses a name that already exists', () => {
+    const g = committed(); g.exec('git switch -c feature'); g.exec('git switch main');
+    const r = g.exec('git switch -c feature');
+    eq(r.ok, false); includes(r.lines, 'already exists');
+  });
+  it('committing on a branch does not move main', () => {
+    const g = committed();
+    const mainTip = g.snapshot().lastSha;
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "on branch"');
+    ok(g.snapshot().lastSha !== mainTip, 'feature moved');
+    g.exec('git switch main');
+    eq(g.snapshot().lastSha, mainTip, 'main did not move');
+  });
+  it('switching rewrites the working file to that branch', () => {
+    const g = committed();
+    const v0 = g.snapshot().wd;
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "on branch"');
+    const v1 = g.snapshot().wd;
+    ok(v1 !== v0, 'file changed on the branch');
+    g.exec('git switch main');
+    eq(g.snapshot().wd, v0, 'file went back when we switched away');
+    g.exec('git switch feature');
+    eq(g.snapshot().wd, v1, 'and returned when we switched back — nothing lost');
+  });
+  it('refuses to switch with uncommitted changes', () => {
+    const g = committed(); g.exec('git switch -c feature'); g.exec('git switch main');
+    g.editFile();
+    const r = g.exec('git switch feature');
+    eq(r.ok, false);
+    includes(r.lines, 'would be overwritten by checkout');
+    eq(g.snapshot().branch, 'main', 'stayed put');
+  });
+  it('git branch lists them and marks the current one', () => {
+    const g = committed(); g.exec('git switch -c feature');
+    const r = g.exec('git branch');
+    includes(r.lines, '* feature'); includes(r.lines, '  main');
+  });
+});
+
+describe('merging branches', () => {
+  /* main untouched since the branch point */
+  function branchAhead() {
+    const g = committed();
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "feature work"');
+    g.exec('git switch main');
+    return g;
+  }
+  it('fast-forwards when main has not moved', () => {
+    const g = branchAhead();
+    const r = g.exec('git merge feature');
+    ok(r.ok); includes(r.lines, 'Fast-forward');
+    eq(g.snapshot().merging, false, 'no merge in progress');
+  });
+  it('says already up to date when there is nothing to take', () => {
+    const g = branchAhead(); g.exec('git merge feature');
+    includes(g.exec('git merge feature').lines, 'Already up to date.');
+  });
+  it('conflicts when BOTH sides moved', () => {
+    const g = branchAhead();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "main work"');
+    const r = g.exec('git merge feature');
+    eq(r.ok, false);
+    includes(r.lines, 'CONFLICT (content)');
+    eq(g.snapshot().merging, true, 'left in a merging state');
+  });
+  it('will not commit a conflict until you stage the fix', () => {
+    const g = branchAhead();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "main work"');
+    g.exec('git merge feature');
+    const r = g.exec('git commit -m "merge"');
+    eq(r.ok, false); includes(r.lines, 'unmerged files');
+  });
+  it('add then commit finishes the merge, with two parents', () => {
+    const g = branchAhead();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "main work"');
+    g.exec('git merge feature');
+    g.editFile();                       // resolve by editing
+    ok(g.exec('git add notes.txt').ok, 'stage the resolution');
+    ok(g.exec('git commit -m "Merge feature"').ok, 'commit it');
+    eq(g.snapshot().merging, false, 'merge finished');
+    const merge = g.snapshot().graph.nodes.filter(n => n.merge);
+    eq(merge.length, 1, 'one merge commit exists');
+  });
+  it('merge --abort puts everything back', () => {
+    const g = branchAhead();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "main work"');
+    const before = g.snapshot().lastSha;
+    g.exec('git merge feature');
+    ok(g.exec('git merge --abort').ok);
+    eq(g.snapshot().merging, false, 'not merging');
+    eq(g.snapshot().lastSha, before, 'back where we were');
+  });
+  it('aborting when nothing is merging is an error', () => {
+    eq(committed().exec('git merge --abort').ok, false);
+  });
+});
+
+describe('deleting branches', () => {
+  it('-d refuses a branch that is not merged', () => {
+    const g = committed();
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "work"');
+    g.exec('git switch main');
+    const r = g.exec('git branch -d feature');
+    eq(r.ok, false); includes(r.lines, 'not fully merged');
+  });
+  it('-D forces it anyway', () => {
+    const g = committed();
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "work"');
+    g.exec('git switch main');
+    ok(g.exec('git branch -D feature').ok);
+    eq(g.snapshot().branches.indexOf('feature'), -1, 'gone');
+  });
+  it('-d succeeds once it IS merged', () => {
+    const g = committed();
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "work"');
+    g.exec('git switch main'); g.exec('git merge feature');
+    ok(g.exec('git branch -d feature').ok, 'safe delete after merge');
+  });
+  it('cannot delete the branch you are standing on', () => {
+    const g = committed();
+    const r = g.exec('git branch -d main');
+    eq(r.ok, false); includes(r.lines, 'Cannot delete branch');
+  });
+});
+
 describe('the history graph', () => {
   const g2 = g => g.snapshot().graph;
 

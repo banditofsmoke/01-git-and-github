@@ -324,6 +324,17 @@ svg.hist text{font-family:var(--f-mono)}
 @media (prefers-reduced-motion:reduce){
   svg.hist .hnode,svg.hist .hlab,svg.hist .hnode circle,svg.hist .hedge{transition:none}}
 
+/* the practical */
+.taskcard{border:1.5px solid var(--amber);background:var(--amber-wash);padding:.8rem .95rem;
+  margin-bottom:.9rem}
+.taskcard.pass{border-color:var(--add);background:var(--add-wash)}
+.taskcard p{margin:0;font-size:.98rem}
+.taskhint{margin-top:.6rem;padding-top:.55rem;border-top:1px solid var(--rule);
+  font-size:.89rem;color:var(--ink-2)}
+.taskhint code{background:var(--panel-2)}
+.xdone{font-family:var(--f-tag);font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  font-size:.68rem;color:var(--add);display:block;margin-bottom:.3rem}
+
 /* terminal sim */
 .term{background:var(--term-bg);color:var(--term-ink);font-family:var(--f-mono);font-size:.79rem;
   line-height:1.55;padding:.8rem .9rem;height:265px;overflow-y:auto;margin-top:1rem;
@@ -755,9 +766,44 @@ img{max-width:100%}
     <p style="margin-top:.8rem;font-family:var(--f-mono);font-size:.88rem" id="score"></p>
   </section>
 
+  <!-- ===== PRACTICAL ===== -->
+  <section id="exam">
+    <div class="shead"><span class="snum">08</span><h2>The Practical</h2></div>
+    <p class="lede">Nine tasks. Nobody tells you the commands — you have to do it. This is a
+    sandbox, so a wrong move costs you nothing: get it wrong as many times as you like. That is
+    the entire point of practising here rather than on something that matters.</p>
+
+    <div class="panel">
+      <div class="ptitle">
+        <div><span class="tag">Task <span id="xnum">1</span> of <span id="xtot">9</span></span>
+          <div class="h" id="xtitle">Start a repository</div></div>
+        <span class="pct" id="xscore">0 done</span>
+      </div>
+
+      <div class="taskcard" id="xcard">
+        <p id="xbrief"></p>
+        <div class="taskhint hide" id="xhint"></div>
+      </div>
+
+      <div class="term" id="xterm"></div>
+      <div class="tin"><span>$</span>
+        <input id="xinput" autocomplete="off" spellcheck="false"
+          placeholder="type a git command…" aria-label="exam command input"></div>
+
+      <div class="btnrow">
+        <button type="button" class="pri" id="x-edit">Edit the file</button>
+        <button type="button" id="x-hint">Show a hint</button>
+        <button type="button" id="x-skip">Skip this one</button>
+        <button type="button" id="x-reset">Restart the test</button>
+      </div>
+      <p class="hint">Stuck on the command itself? <a href="#ref">Every Command</a> has the lot —
+      looking it up is a legitimate way to work, not cheating.</p>
+    </div>
+  </section>
+
   <!-- ===== PLAYER 2 ===== -->
   <section id="player2">
-    <div class="shead"><span class="snum">08</span><h2>Adding Player 2</h2></div>
+    <div class="shead"><span class="snum">09</span><h2>Adding Player 2</h2></div>
     <p class="lede">Everything above works alone. The moment a second person joins, four new ideas
     show up. This is a map, not a lesson — come back when you actually have someone to work with.</p>
 
@@ -1093,7 +1139,7 @@ var ACTS=[
 
   var REF=[['places','The Four Places'],['graph','Merge vs Rebase'],
            ['conflict','Reading a Conflict'],['panic','When It Breaks'],
-           ['ref','Every Command'],['quiz','Check Yourself'],['player2','Adding Player 2']];
+           ['ref','Every Command'],['quiz','Check Yourself'],['exam','The Practical'],['player2','Adding Player 2']];
   nav.innerHTML=
     '<div class="sb-group">The walkthrough</div>'+
     ACTS.map(function(a){
@@ -1227,7 +1273,12 @@ document.addEventListener('click',function(e){
 /* ===================== simulator ===================== */
 /* ==GIT-ENGINE-START==
    Pure state machine. No DOM, no globals, no browser APIs.
-   test.js extracts everything between these sentinels and runs it in Node. */
+   test.js extracts everything between these sentinels and runs it in Node.
+
+   This is a small real git: commits form a DAG with parents, branches are
+   refs pointing into it, and HEAD names the branch you are on. Ancestry
+   decides fast-forward vs merge commit vs "already up to date", the same way
+   the real thing does. */
 function createGit(opts){
   opts = opts || {};
   var FILE = 'notes.txt';
@@ -1240,51 +1291,69 @@ function createGit(opts){
 
   var S;
   function reset(){
-    S = { init:false, exists:false, wd:0, v:0,
-          idx:null, head:null,
-          local:[],        // commits on local main
-          pushed:0,        // how many of local are also on origin
-          remoteOnly:[],   // commits on origin we do not have
-          fetched:false,   // do we know remoteOnly exists?
-          hasRemote:false, upstream:false };
+    S = { init:false, exists:false, wd:0, v:0, idx:null,
+          commits:{},      // sha -> {sha,msg,parents:[],ver,lane}
+          order:[],        // shas, creation order — the graph's x axis
+          refs:{},         // branch -> sha
+          HEAD:'main',
+          remoteRefs:{},   // branch -> sha, as origin has it
+          lanes:{main:0}, nextLane:1,
+          hasRemote:false, upstream:{}, fetched:true,
+          merging:null };  // {from, theirSha} while a merge is unresolved
   }
   reset();
 
-  /* ---- derived state ---- */
-  function tracked(){ return S.head!==null || S.idx!==null; }
-  function isStaged(){ return S.idx!==null && S.idx!==S.head; }
+  /* ---------- the DAG ---------- */
+  function tip(){ return S.refs[S.HEAD] || null; }
+  function commitOf(sha){ return sha ? S.commits[sha] : null; }
+  function verOf(sha){ var c=commitOf(sha); return c ? c.ver : null; }
+  function headVer(){ return verOf(tip()); }
+
+  function reach(sha){                       // sha + everything behind it
+    var out={}, stack=sha?[sha]:[];
+    while(stack.length){
+      var s=stack.pop(); if(!s||out[s])continue; out[s]=true;
+      var c=S.commits[s]; if(c) c.parents.forEach(function(p){ stack.push(p); });
+    }
+    return out;
+  }
+  function isAncestor(a,b){ return !!a && !!b && !!reach(b)[a]; }
+  function countOnly(a,b){                   // in reach(a) but not reach(b)
+    var ra=reach(a), rb=reach(b), n=0;
+    for(var k in ra) if(!rb[k]) n++;
+    return n;
+  }
+  function ahead(){ return countOnly(tip(), S.remoteRefs[S.HEAD]||null); }
+  function behind(){ return countOnly(S.remoteRefs[S.HEAD]||null, tip()); }
+
+  function makeCommit(msg,parents,ver,lane){
+    var sha=nextSha();
+    S.commits[sha]={sha:sha,msg:msg,parents:parents.filter(Boolean),ver:ver,lane:lane};
+    S.order.push(sha);
+    return sha;
+  }
+  function laneFor(branch){
+    if(S.lanes[branch]===undefined) S.lanes[branch]=S.nextLane++;
+    return S.lanes[branch];
+  }
+
+  /* ---------- working tree ---------- */
+  function tracked(){ return headVer()!==null || S.idx!==null; }
+  function isStaged(){ return S.idx!==null && S.idx!==headVer(); }
   function isMod(){
     if(!S.exists) return false;
-    var ref = S.idx!==null ? S.idx : S.head;
+    var ref = S.idx!==null ? S.idx : headVer();
     return ref!==null && S.wd!==ref;
   }
   function isUntracked(){ return S.exists && !tracked(); }
-  function ahead(){ return S.local.length - S.pushed; }
-  function behind(){ return S.remoteOnly.length; }
+  function dirty(){ return isMod() || isStaged(); }
 
-  /* What the history looks like, as two pointers into a chain of commits.
-     shared     — commits both you and origin have
-     localOnly  — yours, not pushed yet        (main is ahead)
-     remoteOnly — origin's, not yours yet      (origin/main is ahead)
-     diverged   — both of the above at once, which is what makes push refuse */
-  function graph(){
-    var shared     = S.local.slice(0, S.pushed);
-    var localOnly  = S.local.slice(S.pushed);
-    var remoteOnly = S.remoteOnly.slice();
-    return {
-      shared:shared, localOnly:localOnly, remoteOnly:remoteOnly,
-      diverged: localOnly.length>0 && remoteOnly.length>0,
-      hasRemote:S.hasRemote,
-      total: shared.length + localOnly.length + remoteOnly.length
-    };
-  }
-
-  /* ---- output helpers ---- */
+  /* ---------- output ---------- */
   var buf;
   function w(t,c){ buf.push({t:t, c:c||''}); }
   function blank(){ w(''); }
 
-  /* ---- non-command actions ---- */
+  /* ---------- actions that are not commands ---------- */
   function editFile(){
     if(!S.init) return {ok:false, lines:[{t:'(make the repository first — run git init)',c:'d'}]};
     buf=[]; S.v++; S.wd=S.v;
@@ -1297,35 +1366,46 @@ function createGit(opts){
     buf=[];
     if(!S.hasRemote){ w('(connect a remote first — run git remote add origin)','d'); blank();
       return {ok:false, lines:buf}; }
-    S.remoteOnly.push({sha:nextSha(), msg:'Update '+FILE+' via the website'});
-    S.fetched=false;
+    var base=S.remoteRefs.main||null;
+    var sha=makeCommit('Update '+FILE+' via the website',[base],(verOf(base)||0)+100,0);
+    S.remoteRefs.main=sha; S.fetched=false;
     w('(over on github.com you edit '+FILE+' and commit it there)','d');
     w('(your laptop knows nothing about this yet — that is the point)','d');
     blank();
     return {ok:true, lines:buf, moved:null};
   }
 
-  /* ---- git status ---- */
+  /* ---------- git status ---------- */
   function status(){
     if(!S.init){ w('fatal: not a git repository (or any of the parent directories): .git','r'); return; }
-    w('On branch main');
-    if(!S.local.length && !S.remoteOnly.length){ blank(); w('No commits yet'); }
-    else if(S.hasRemote && S.upstream){
+    if(S.merging){
+      w('On branch '+S.HEAD);
+      w('You have unmerged paths.');
+      w('  (fix conflicts and run "git commit")','d');
+      w('  (use "git merge --abort" to abort the merge)','d');
+      blank(); w('Unmerged paths:');
+      w('  (use "git add <file>..." to mark resolution)','d');
+      w('\tboth modified:   '+FILE,'r');
+      return;
+    }
+    w('On branch '+S.HEAD);
+    if(!S.order.length){ blank(); w('No commits yet'); }
+    else if(S.hasRemote && S.upstream[S.HEAD]){
       var a=ahead(), b=S.fetched?behind():0;
-      if(a&&b){ w("Your branch and 'origin/main' have diverged,");
+      if(a&&b){ w("Your branch and 'origin/"+S.HEAD+"' have diverged,");
                 w('and have '+a+' and '+b+' different commits each, respectively.');
                 w('  (use "git pull" to merge the remote branch into yours)','d'); }
-      else if(a){ w("Your branch is ahead of 'origin/main' by "+a+" commit"+(a>1?'s':'')+'.');
+      else if(a){ w("Your branch is ahead of 'origin/"+S.HEAD+"' by "+a+" commit"+(a>1?'s':'')+'.');
                   w('  (use "git push" to publish your local commits)','d'); }
-      else if(b){ w("Your branch is behind 'origin/main' by "+b+" commit"+(b>1?'s':'')+
+      else if(b){ w("Your branch is behind 'origin/"+S.HEAD+"' by "+b+" commit"+(b>1?'s':'')+
                     ', and can be fast-forwarded.');
                   w('  (use "git pull" to update your local branch)','d'); }
-      else w("Your branch is up to date with 'origin/main'.");
+      else w("Your branch is up to date with 'origin/"+S.HEAD+"'.");
     }
     var any=false;
     if(isStaged()){ blank(); w('Changes to be committed:');
       w('  (use "git restore --staged <file>..." to unstage)','d');
-      w('\t'+(S.head===null?'new file:   ':'modified:   ')+FILE,'g'); any=true; }
+      w('\t'+(headVer()===null?'new file:   ':'modified:   ')+FILE,'g'); any=true; }
     if(isMod()){ blank(); w('Changes not staged for commit:');
       w('  (use "git add <file>..." to update what will be committed)','d');
       w('  (use "git restore <file>..." to discard changes in working directory)','d');
@@ -1333,14 +1413,14 @@ function createGit(opts){
     if(isUntracked()){ blank(); w('Untracked files:');
       w('  (use "git add <file>..." to include in what will be committed)','d');
       w('\t'+FILE,'r'); any=true; }
-    if(!any){ w(!S.exists && !S.local.length
+    if(!any){ w(!S.exists && !S.order.length
         ? 'nothing to commit (create/copy files and use "git add" to track)'
         : 'nothing to commit, working tree clean'); }
     else if(isUntracked() && !isStaged()){ blank();
       w('nothing added to commit but untracked files present (use "git add" to track)'); }
   }
 
-  /* ---- the command table ---- */
+  /* ---------- commands ---------- */
   function exec(raw){
     buf=[]; var moved=null;
     var c=String(raw||'').trim().replace(/\s+/g,' ');
@@ -1360,9 +1440,15 @@ function createGit(opts){
     if(c==='git status' || c==='git status -s'){ status(); blank();
       return {ok:true, lines:buf, moved:null}; }
 
+    /* ---- add ---- */
     if(new RegExp('^git add ('+FILE.replace('.','\\.')+'|\\.|-A|--all)$').test(c)){
       if(!S.exists){ w("fatal: pathspec '"+FILE+"' did not match any files",'r'); blank();
         return {ok:false, lines:buf, moved:null}; }
+      if(S.merging){
+        S.idx=S.wd; moved='add';
+        w('(marked as resolved. Now run git commit to finish the merge.)','d'); blank();
+        return {ok:true, lines:buf, moved:moved};
+      }
       if(!isMod() && !isUntracked()){ w('(nothing to add — box 1 already matches box 2)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
       S.idx=S.wd; moved='add';
@@ -1370,9 +1456,22 @@ function createGit(opts){
       return {ok:true, lines:buf, moved:moved};
     }
 
+    /* ---- commit ---- */
     var m=c.match(/^git commit -m ["'](.+)["']$/);
     var am=c.match(/^git commit -am ["'](.+)["']$/);
     if(m || am || c==='git commit' || /^git commit -am /.test(c)){
+      if(S.merging){
+        if(S.idx===null){
+          w('U\t'+FILE,'r'); w('error: Committing is not possible because you have unmerged files.','r');
+          w('hint: Fix them up in the work tree, and then use "git add" as appropriate.','d');
+          blank(); return {ok:false, lines:buf, moved:null};
+        }
+        var msg0 = m?m[1] : am?am[1] : "Merge branch '"+S.merging.from+"'";
+        var sha0=makeCommit(msg0,[tip(),S.merging.theirSha],S.idx,S.lanes[S.HEAD]||0);
+        S.refs[S.HEAD]=sha0; S.idx=null; S.merging=null; moved='commit';
+        w('['+S.HEAD+' '+sha0+'] '+msg0);
+        blank(); return {ok:true, lines:buf, moved:moved};
+      }
       var msg = m ? m[1] : am ? am[1] : 'Update '+FILE;
       if(c==='git commit') w('(a text editor would open here. Use -m "message" to skip it.)','d');
       if(/^git commit -am /.test(c)){
@@ -1384,7 +1483,7 @@ function createGit(opts){
         if(isMod()) S.idx=S.wd;
       }
       if(!isStaged()){
-        w('On branch main');
+        w('On branch '+S.HEAD);
         if(isMod()||isUntracked()){
           w(isUntracked()?'Untracked files:':'Changes not staged for commit:');
           w('\t'+FILE,'r');
@@ -1392,27 +1491,140 @@ function createGit(opts){
         } else w('nothing to commit, working tree clean');
         blank(); return {ok:false, lines:buf, moved:null};
       }
-      var root=S.local.length===0, sh=nextSha();
-      S.head=S.idx; S.idx=null; S.local.push({sha:sh, msg:msg}); moved='commit';
-      w('['+(root?'main (root-commit) ':'main ')+sh+'] '+msg);
+      var root=!tip(), sha=makeCommit(msg,[tip()],S.idx,laneFor(S.HEAD));
+      S.refs[S.HEAD]=sha; S.idx=null; moved='commit';
+      w('['+S.HEAD+(root?' (root-commit)':'')+' '+sha+'] '+msg);
       w(' 1 file changed, 1 insertion(+)'+(root?'':', 1 deletion(-)'));
       if(root) w(' create mode 100644 '+FILE);
       blank(); return {ok:true, lines:buf, moved:moved};
     }
 
-    if(/^git log/.test(c)){
-      if(!S.local.length){
-        w("fatal: your current branch 'main' does not have any commits yet",'r'); blank();
+    /* ---- branches ---- */
+    var sw=c.match(/^git (?:switch -c|checkout -b) ([\w./][\w./-]*)$/);
+    if(sw){
+      var nb=sw[1];
+      if(S.refs[nb]!==undefined){
+        w("fatal: a branch named '"+nb+"' already exists",'r'); blank();
         return {ok:false, lines:buf, moved:null};
       }
-      for(var i=S.local.length-1;i>=0;i--){
-        var cm=S.local[i], hd=(i===S.local.length-1);
-        var ref = hd ? ' (HEAD -> main'+(S.pushed===S.local.length&&S.hasRemote?', origin/main':'')+')' : '';
-        w(cm.sha+ref+' '+cm.msg, hd?'u':'');
+      if(!tip()){
+        w("fatal: you must commit something before you can branch",'r'); blank();
+        return {ok:false, lines:buf, moved:null};
       }
+      S.refs[nb]=tip(); laneFor(nb); S.HEAD=nb;
+      w("Switched to a new branch '"+nb+"'");
+      w('(a branch is just a sticky note pointing at the commit you were on)','d');
+      blank(); return {ok:true, lines:buf, moved:'branch'};
+    }
+    var sw2=c.match(/^git (?:switch|checkout) ([\w./][\w./-]*)$/);
+    if(sw2){
+      var to=sw2[1];
+      if(S.refs[to]===undefined){
+        w("fatal: invalid reference: "+to,'r'); blank();
+        return {ok:false, lines:buf, moved:null};
+      }
+      if(to===S.HEAD){ w("Already on '"+to+"'"); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      if(dirty()){
+        w('error: Your local changes to the following files would be overwritten by checkout:','r');
+        w('\t'+FILE,'r');
+        w('Please commit your changes or stash them before you switch branches.');
+        w('Aborting','r');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      S.HEAD=to; S.idx=null; S.wd=verOf(S.refs[to])||0;
+      w("Switched to branch '"+to+"'");
+      w('(look at your file — git rewrote it to match this branch)','d');
+      blank(); return {ok:true, lines:buf, moved:'branch'};
+    }
+    if(c==='git branch'){
+      var names=Object.keys(S.refs);
+      if(!names.length){ w('(no branches yet — make a commit first)','d'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      names.sort().forEach(function(n){ w((n===S.HEAD?'* ':'  ')+n, n===S.HEAD?'g':''); });
       blank(); return {ok:true, lines:buf, moved:null};
     }
+    var del=c.match(/^git branch (-d|-D) ([\w./-]+)$/);
+    if(del){
+      var force=del[1]==='-D', bn=del[2];
+      if(S.refs[bn]===undefined){ w("error: branch '"+bn+"' not found.",'r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      if(bn===S.HEAD){
+        w("error: Cannot delete branch '"+bn+"' checked out at '/git-practice'",'r'); blank();
+        return {ok:false, lines:buf, moved:null};
+      }
+      if(!force && !isAncestor(S.refs[bn], tip())){
+        w("error: The branch '"+bn+"' is not fully merged.",'r');
+        w("If you are sure you want to delete it, run 'git branch -D "+bn+"'.",'d');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      var was=S.refs[bn]; delete S.refs[bn];
+      w('Deleted branch '+bn+' (was '+was+').');
+      blank(); return {ok:true, lines:buf, moved:'branch'};
+    }
 
+    /* ---- merge ---- */
+    if(c==='git merge --abort'){
+      if(!S.merging){ w('fatal: There is no merge to abort.','r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      S.merging=null; S.idx=null; S.wd=headVer()||0;
+      w('(merge aborted — everything back exactly as it was)','d');
+      blank(); return {ok:true, lines:buf, moved:'merge'};
+    }
+    var mg=c.match(/^git merge ([\w./][\w./-]*)$/);
+    if(mg){
+      var src=mg[1];
+      if(S.merging){ w('error: Merging is not possible because you have unmerged files.','r');
+        blank(); return {ok:false, lines:buf, moved:null}; }
+      var theirs = S.refs[src]!==undefined ? S.refs[src]
+                 : (src==='origin/'+S.HEAD ? S.remoteRefs[S.HEAD] : undefined);
+      if(theirs===undefined){ w('merge: '+src+' - not something we can merge','r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      var mine=tip();
+      if(theirs===mine || isAncestor(theirs,mine)){
+        w('Already up to date.'); blank();
+        return {ok:true, lines:buf, moved:null};
+      }
+      if(isAncestor(mine,theirs)){
+        S.refs[S.HEAD]=theirs; S.wd=verOf(theirs); S.idx=null;
+        w('Updating '+(mine?mine:'0000000')+'..'+theirs);
+        w('Fast-forward');
+        w(' '+FILE+' | 1 +');
+        w('(fast-forward: your branch had nothing of its own, so git just','d');
+        w(' slid the pointer forward. No merge commit needed.)','d');
+        blank(); return {ok:true, lines:buf, moved:'merge'};
+      }
+      S.merging={from:src, theirSha:theirs};
+      w('Auto-merging '+FILE);
+      w('CONFLICT (content): Merge conflict in '+FILE,'r');
+      w('Automatic merge failed; fix conflicts and then commit the result.','r');
+      w('(both branches changed the same file. Edit it, then git add, then','d');
+      w(' git commit. Or git merge --abort to back out entirely.)','d');
+      blank(); return {ok:false, lines:buf, moved:'merge'};
+    }
+
+    /* ---- log / diff / restore ---- */
+    if(/^git log/.test(c)){
+      if(!tip()){
+        w("fatal: your current branch '"+S.HEAD+"' does not have any commits yet",'r'); blank();
+        return {ok:false, lines:buf, moved:null};
+      }
+      var seen={}, stack=[tip()], list=[];
+      while(stack.length){
+        var s=stack.shift(); if(!s||seen[s])continue; seen[s]=true;
+        var cm=S.commits[s]; if(!cm)continue; list.push(cm);
+        cm.parents.forEach(function(p){ stack.push(p); });
+      }
+      list.forEach(function(cm,i){
+        var labels=[];
+        Object.keys(S.refs).forEach(function(n){ if(S.refs[n]===cm.sha)
+          labels.push(n===S.HEAD?'HEAD -> '+n:n); });
+        Object.keys(S.remoteRefs).forEach(function(n){ if(S.remoteRefs[n]===cm.sha)
+          labels.push('origin/'+n); });
+        w(cm.sha+(labels.length?' ('+labels.join(', ')+')':'')+' '+cm.msg, i===0?'u':'');
+      });
+      blank(); return {ok:true, lines:buf, moved:null};
+    }
     if(c==='git diff'){
       if(!isMod()){
         if(isStaged()){
@@ -1422,7 +1634,7 @@ function createGit(opts){
         blank(); return {ok:true, lines:buf, moved:null};
       }
       w('diff --git a/'+FILE+' b/'+FILE); w('--- a/'+FILE); w('+++ b/'+FILE); w('@@ -1 +1 @@','b');
-      w('-My notes, version '+(S.idx!==null?S.idx:S.head),'r');
+      w('-My notes, version '+(S.idx!==null?S.idx:headVer()),'r');
       w('+My notes, version '+S.wd,'g');
       blank(); return {ok:true, lines:buf, moved:null};
     }
@@ -1430,16 +1642,15 @@ function createGit(opts){
       if(!isStaged()){ w('(nothing staged, so nothing to compare against your last commit)','d');
         blank(); return {ok:true, lines:buf, moved:null}; }
       w('diff --git a/'+FILE+' b/'+FILE);
-      w(S.head===null?'new file mode 100644':'--- a/'+FILE); w('+++ b/'+FILE); w('@@ -0,0 +1 @@','b');
-      if(S.head!==null) w('-My notes, version '+S.head,'r');
+      w(headVer()===null?'new file mode 100644':'--- a/'+FILE); w('+++ b/'+FILE); w('@@ -0,0 +1 @@','b');
+      if(headVer()!==null) w('-My notes, version '+headVer(),'r');
       w('+My notes, version '+S.idx,'g');
       blank(); return {ok:true, lines:buf, moved:null};
     }
-
     if(c==='git restore '+FILE || c==='git restore .'){
       if(!isMod()){ w('(nothing to restore)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
-      S.wd = S.idx!==null ? S.idx : S.head;
+      S.wd = S.idx!==null ? S.idx : headVer();
       w('(silent. Your unsaved edits are gone — reverted to '+
         (S.idx!==null?'what you staged':'your last commit')+'.)','d');
       blank(); return {ok:true, lines:buf, moved:'restore'};
@@ -1452,6 +1663,7 @@ function createGit(opts){
       blank(); return {ok:true, lines:buf, moved:'unstage'};
     }
 
+    /* ---- remote ---- */
     if(/^git remote add origin/.test(c)){
       if(S.hasRemote){ w('error: remote origin already exists.','r'); blank();
         return {ok:false, lines:buf, moved:null}; }
@@ -1465,82 +1677,68 @@ function createGit(opts){
       w('origin\t'+URL+' (fetch)'); w('origin\t'+URL+' (push)');
       blank(); return {ok:true, lines:buf, moved:null};
     }
-
     if(/^git fetch/.test(c)){
       if(!S.hasRemote){ w("fatal: 'origin' does not appear to be a git repository",'r'); blank();
         return {ok:false, lines:buf, moved:null}; }
-      if(!S.remoteOnly.length){ w('(already up to date — nothing new on origin)','d'); blank();
+      if(!behind()){ w('(already up to date — nothing new on origin)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
       S.fetched=true;
-      w('From '+URL.replace('https://github.com/','github.com:').replace('.git',''));
-      w('   3f2a1b0..'+S.remoteOnly[S.remoteOnly.length-1].sha+'  main       -> origin/main');
+      w('From github.com:you/git-practice');
+      w('   3f2a1b0..'+S.remoteRefs[S.HEAD]+'  '+S.HEAD+'       -> origin/'+S.HEAD);
       w('(downloaded, and changed nothing in your folder. fetch is always safe.)','d');
       blank(); return {ok:true, lines:buf, moved:'fetch'};
     }
-
     if(/^git pull/.test(c)){
       if(!S.hasRemote){ w("fatal: 'origin' does not appear to be a git repository",'r'); blank();
         return {ok:false, lines:buf, moved:null}; }
-      if(!S.remoteOnly.length){ w('Already up to date.'); blank();
+      var rem=S.remoteRefs[S.HEAD]||null; S.fetched=true;
+      if(!rem || rem===tip() || isAncestor(rem,tip())){ w('Already up to date.'); blank();
         return {ok:true, lines:buf, moved:null}; }
-      var a2=ahead();
-      S.fetched=true;
-      if(a2===0){
-        // fast-forward
-        for(var k=0;k<S.remoteOnly.length;k++) S.local.push(S.remoteOnly[k]);
-        S.pushed=S.local.length; S.remoteOnly=[];
-        w('Updating 3f2a1b0..'+S.local[S.local.length-1].sha);
-        w('Fast-forward');
-        w(' '+FILE+' | 1 +');
+      if(!tip() || isAncestor(tip(),rem)){
+        S.refs[S.HEAD]=rem; S.wd=verOf(rem); S.idx=null;
+        w('Updating 3f2a1b0..'+rem); w('Fast-forward'); w(' '+FILE+' | 1 +');
         w('(fast-forward: you had nothing of your own, so git just moved you up)','d');
-      } else {
-        // origin already holds everything it had, plus the commits we just took from it;
-        // only our own commits and the new merge commit are unpushed.
-        var onOrigin = S.pushed + S.remoteOnly.length;
-        for(var k2=0;k2<S.remoteOnly.length;k2++) S.local.push(S.remoteOnly[k2]);
-        var msh=nextSha();
-        S.local.push({sha:msh, msg:"Merge branch 'main' of "+URL});
-        S.remoteOnly=[]; S.pushed=onOrigin;
-        w('Merge made by the \'ort\' strategy.');
-        w(' '+FILE+' | 1 +');
-        w('(both sides had commits, so git made a merge commit. In real life the','d');
-        w(' same line changing on both sides is what causes a conflict — Step 07.)','d');
+        blank(); return {ok:true, lines:buf, moved:'pull'};
       }
+      var msh=makeCommit("Merge branch 'main' of "+URL,[tip(),rem],Math.max(S.wd,verOf(rem)),
+                         S.lanes[S.HEAD]||0);
+      S.refs[S.HEAD]=msh; S.wd=verOf(msh); S.idx=null;
+      w("Merge made by the 'ort' strategy."); w(' '+FILE+' | 1 +');
+      w('(both sides had commits, so git made a merge commit.)','d');
       blank(); return {ok:true, lines:buf, moved:'pull'};
     }
-
     if(/^git push/.test(c)){
       if(!S.hasRemote){
         w("fatal: 'origin' does not appear to be a git repository",'r');
         w('fatal: Could not read from remote repository.','r');
         blank(); return {ok:false, lines:buf, moved:null};
       }
-      if(!S.upstream && c==='git push'){
-        w('fatal: The current branch main has no upstream branch.','r');
+      if(!S.upstream[S.HEAD] && c==='git push'){
+        w('fatal: The current branch '+S.HEAD+' has no upstream branch.','r');
         w('To push the current branch and set the remote-tracking branch, use'); blank();
-        w('    git push --set-upstream origin main','u'); blank();
+        w('    git push --set-upstream origin '+S.HEAD,'u'); blank();
         w('(Read the error — git just handed you the exact command.)','d');
         blank(); return {ok:false, lines:buf, moved:null};
       }
-      if(S.remoteOnly.length){
+      if(behind()){
         w('To '+URL);
-        w(' ! [rejected]        main -> main (fetch first)','r');
+        w(' ! [rejected]        '+S.HEAD+' -> '+S.HEAD+' (fetch first)','r');
         w("error: failed to push some refs to '"+URL+"'",'r');
         w('hint: Updates were rejected because the remote contains work that you do','d');
         w('hint: not have locally. Integrate the remote changes (e.g. "git pull")','d');
         w('(git is protecting you — pushing now would erase what is on github.)','d');
         blank(); return {ok:false, lines:buf, moved:null};
       }
-      if(/-u|--set-upstream/.test(c)) S.upstream=true;
-      if(!S.local.length || S.pushed===S.local.length){
+      if(/-u|--set-upstream/.test(c)) S.upstream[S.HEAD]=true;
+      if(!tip() || S.remoteRefs[S.HEAD]===tip()){
         w('Everything up-to-date'); blank();
         return {ok:true, lines:buf, moved:null};
       }
-      S.pushed=S.local.length; moved='push';
+      S.remoteRefs[S.HEAD]=tip(); moved='push';
       w('Enumerating objects: 3, done.','d');
       w('To '+URL);
-      w('   3f2a1b0..'+S.local[S.local.length-1].sha+'  main -> main');
-      if(/-u|--set-upstream/.test(c)) w("branch 'main' set up to track 'origin/main'.");
+      w('   3f2a1b0..'+tip()+'  '+S.HEAD+' -> '+S.HEAD);
+      if(/-u|--set-upstream/.test(c)) w("branch '"+S.HEAD+"' set up to track 'origin/"+S.HEAD+"'.");
       blank(); return {ok:true, lines:buf, moved:moved};
     }
 
@@ -1552,33 +1750,85 @@ function createGit(opts){
     blank(); return {ok:false, lines:buf, moved:null};
   }
 
-  /* ---- what should they do next? ---- */
+  /* ---------- what next? ---------- */
   function suggest(){
-    if(!S.init)          return {cmd:'git init',                    label:'Start the repository'};
-    if(!S.exists)        return {cmd:'@edit',                       label:'Create '+FILE};
-    if(isMod()||isUntracked()) return {cmd:'git add '+FILE,         label:'Put it in the basket'};
-    if(isStaged())       return {cmd:'git commit -m "My notes"',    label:'Save it as a commit'};
-    if(!S.hasRemote)     return {cmd:'git remote add origin '+URL,  label:'Connect it to GitHub'};
-    if(S.remoteOnly.length) return {cmd:'git pull',                 label:'Get GitHub’s changes first'};
-    if(!S.upstream)      return {cmd:'git push -u origin main',     label:'Upload it for the first time'};
-    if(ahead()>0)        return {cmd:'git push',                    label:'Upload your new commits'};
+    if(!S.init)                return {cmd:'git init',                   label:'Start the repository'};
+    if(!S.exists)              return {cmd:'@edit',                      label:'Create '+FILE};
+    if(S.merging && S.idx===null) return {cmd:'git add '+FILE,           label:'Mark the conflict resolved'};
+    if(S.merging)              return {cmd:'git commit -m "Merge"',      label:'Finish the merge'};
+    if(isMod()||isUntracked()) return {cmd:'git add '+FILE,              label:'Put it in the basket'};
+    if(isStaged())             return {cmd:'git commit -m "My notes"',   label:'Save it as a commit'};
+    if(!S.hasRemote)           return {cmd:'git remote add origin '+URL, label:'Connect it to GitHub'};
+    if(behind())               return {cmd:'git pull',                   label:'Get GitHub’s changes first'};
+    if(!S.upstream[S.HEAD])    return {cmd:'git push -u origin '+S.HEAD, label:'Upload it for the first time'};
+    if(ahead())                return {cmd:'git push',                   label:'Upload your new commits'};
     return {cmd:'@edit', label:'Change the file again'};
+  }
+
+  /* ---------- what the graph draws ---------- */
+  function graph(){
+    var localR=reach(tip());
+    var allLocal={};
+    Object.keys(S.refs).forEach(function(n){
+      var r=reach(S.refs[n]); for(var k in r) allLocal[k]=true;
+    });
+    var remoteR={};
+    Object.keys(S.remoteRefs).forEach(function(n){
+      var r=reach(S.remoteRefs[n]); for(var k in r) remoteR[k]=true;
+    });
+
+    var nodes=S.order.map(function(sha){
+      var c=S.commits[sha];
+      var inL=!!allLocal[sha], inR=!!remoteR[sha];
+      return {sha:sha, msg:c.msg, lane:c.lane, merge:c.parents.length>1,
+              kind: inL&&inR ? 'shared' : inR ? 'remote' : 'local',
+              onHead: !!localR[sha]};
+    });
+    var edges=[];
+    S.order.forEach(function(sha){
+      S.commits[sha].parents.forEach(function(p){ if(S.commits[p]) edges.push([sha,p]); });
+    });
+    var refs=[];
+    Object.keys(S.refs).forEach(function(n){
+      refs.push({name:n, sha:S.refs[n], kind:'local', head:n===S.HEAD});
+    });
+    Object.keys(S.remoteRefs).forEach(function(n){
+      refs.push({name:'origin/'+n, sha:S.remoteRefs[n], kind:'remote', head:false});
+    });
+
+    /* kept for the four-box story: HEAD versus its own remote */
+    var rem=S.remoteRefs[S.HEAD]||null, ra=reach(rem);
+    var shared=[], localOnly=[], remoteOnly=[];
+    S.order.forEach(function(sha){
+      var c=S.commits[sha];
+      if(localR[sha]&&ra[sha]) shared.push(c);
+      else if(localR[sha]) localOnly.push(c);
+      else if(ra[sha]) remoteOnly.push(c);
+    });
+
+    return {nodes:nodes, edges:edges, refs:refs, head:S.HEAD,
+            branches:Object.keys(S.refs), merging:!!S.merging,
+            shared:shared, localOnly:localOnly, remoteOnly:remoteOnly,
+            diverged: localOnly.length>0 && remoteOnly.length>0,
+            hasRemote:S.hasRemote, total:S.order.length};
   }
 
   return {
     exec:exec, editFile:editFile, remoteCommit:remoteCommit, suggest:suggest,
-    reset:function(){ reset(); },
     graph:graph,
+    reset:function(){ reset(); },
     snapshot:function(){
       return {
         init:S.init, exists:S.exists, wd:S.wd,
         untracked:isUntracked(), modified:isMod(), staged:isStaged(),
-        stagedVersion:S.idx, headVersion:S.head,
-        commits:S.local.length, pushed:S.pushed,
-        remoteOnly:S.remoteOnly.length, fetched:S.fetched,
-        hasRemote:S.hasRemote, upstream:S.upstream,
+        stagedVersion:S.idx, headVersion:headVer(),
+        commits:Object.keys(reach(tip())).length,
+        pushed:Object.keys(reach(S.remoteRefs[S.HEAD]||null)).length,
+        remoteOnly:behind(), fetched:S.fetched,
+        hasRemote:S.hasRemote, upstream:!!S.upstream[S.HEAD],
         ahead:ahead(), behind:behind(),
-        lastSha:S.local.length?S.local[S.local.length-1].sha:null,
+        branch:S.HEAD, branches:Object.keys(S.refs), merging:!!S.merging,
+        lastSha:tip(),
         graph:graph()
       };
     }
@@ -1629,10 +1879,11 @@ function createGit(opts){
     drawHistory(S.graph);
   }
 
-  /* ---- the commit graph: two pointers into a chain ----
-     Elements persist between renders and are updated in place, keyed by sha.
-     That is the whole point: rebuilding the SVG each time meant origin/main
-     teleported on push. Keeping the element alive lets it slide instead. */
+  /* ---- the commit graph ----
+     Elements persist between renders and are updated in place, keyed by sha,
+     so pointers slide along the chain instead of teleporting. Lanes come from
+     the branch a commit was made on; remote-only commits get their own lane
+     when the history has genuinely forked. */
   var SVGNS='http://www.w3.org/2000/svg';
   var H={svg:null,edges:null,nodes:{},labels:{}};
   var NODE_STYLE={
@@ -1646,9 +1897,6 @@ function createGit(opts){
     if(cls) e.setAttribute('class',cls);
     return e;
   }
-  /* Move an element. `animate` false snaps without a transition — used when an
-     element is first created, so it appears in place rather than flying in
-     from the origin. */
   function moveTo(el,x,y,animate){
     if(!animate) el.style.transition='none';
     el.style.transform='translate('+x+'px,'+y+'px)';
@@ -1666,62 +1914,52 @@ function createGit(opts){
       return;
     }
 
-    /* ---------- layout ---------- */
-    var R=13, GAP=68, PAD=32, YMID=75, YUP=35, YDN=115;
-    var shared=G.shared.slice(), collapsed=0;
-    if(shared.length>4){ collapsed=shared.length-3; shared=shared.slice(-3); }
+    /* ---------- which commits to draw ---------- */
+    var R=12, GAP=62, PAD=30, YMID=78, STEP=42, MAX=9;
+    var all=G.nodes, collapsed=0;
+    if(all.length>MAX){ collapsed=all.length-MAX; all=all.slice(-MAX); }
+    var shown={}; all.forEach(function(n){ shown[n.sha]=true; });
 
-    var nodes=[], edges=[], x=PAD, prev=null;
-    function add(kind,key,label,y){
-      var nd={kind:kind,key:key,label:label,x:x,y:y}; nodes.push(nd); return nd;
+    /* remote-only work sits on its own lane once the history has forked */
+    function laneOf(n){
+      if(n.kind==='remote' && G.diverged) return -1;
+      return n.lane||0;
+    }
+    function laneY(l){
+      if(l===0) return YMID;
+      var mag=Math.ceil(Math.abs(l)/1), dir=(l<0?-1:1);
+      return YMID + dir*STEP*mag;
     }
 
-    if(collapsed){ prev=add('more','more','+'+collapsed,YMID); x+=GAP; }
-    shared.forEach(function(c){
-      var nd=add('shared',c.sha,c.sha,YMID); if(prev)edges.push([prev,nd]); prev=nd; x+=GAP;
+    var pos={}, x=PAD, maxOff=0;
+    if(collapsed) x+=GAP;
+    all.forEach(function(n){
+      var l=laneOf(n), y=laneY(l);
+      maxOff=Math.max(maxOff,Math.abs(y-YMID));
+      pos[n.sha]={x:x,y:y,n:n}; x+=GAP;
     });
 
-    var mainNode=prev, originNode=prev;
+    var W=Math.max(x+130,420), H_=Math.max(150,YMID+maxOff+58);
 
-    if(!G.diverged){
-      var tail = G.localOnly.length ? G.localOnly : G.remoteOnly;
-      var kind = G.localOnly.length ? 'local' : 'remote';
-      tail.forEach(function(c){
-        var nd=add(kind,c.sha,c.sha,YMID); if(prev)edges.push([prev,nd]); prev=nd; x+=GAP;
-      });
-      if(tail.length){ if(kind==='local') mainNode=prev; else originNode=prev; }
-    } else {
-      var forkX=x, pUp=prev, pDn=prev, xUp;
-      x=forkX;
-      G.remoteOnly.forEach(function(c){
-        var nd=add('remote',c.sha,c.sha,YUP); if(pUp)edges.push([pUp,nd]); pUp=nd; x+=GAP;
-      });
-      xUp=x; x=forkX;
-      G.localOnly.forEach(function(c){
-        var nd=add('local',c.sha,c.sha,YDN); if(pDn)edges.push([pDn,nd]); pDn=nd; x+=GAP;
-      });
-      x=Math.max(xUp,x);
-      originNode=pUp; mainNode=pDn;
-    }
-
-    var W=Math.max(x+120,420), H_=150;
-
-    /* ---------- the note, which doubles as the graph's text alternative ---------- */
-    var a=G.localOnly.length, b=G.remoteOnly.length;
+    /* ---------- the note, also the graph's text alternative ---------- */
+    var a=G.localOnly.length, b=G.remoteOnly.length, extra='';
+    if(G.branches.length>1) extra=' On branch <b>'+G.head+'</b>, '+G.branches.length+' branches.';
     var plain = !G.hasRemote ? 'All on your machine. No GitHub connection yet.'
       : G.diverged ? 'Forked. You and GitHub each have commits the other does not have.'
       : a ? a+' commit'+(a>1?'s':'')+' on your machine that GitHub does not have yet.'
       : b ? 'GitHub has '+b+' commit'+(b>1?'s':'')+' you do not have yet.'
       : 'In sync with GitHub.';
-    note.innerHTML = !G.hasRemote
-      ? 'All on your machine. No GitHub connection yet.'
-      : G.diverged
-        ? '<b>Forked.</b> You and GitHub each have commits the other doesn’t — which is exactly why <code>git push</code> refuses.'
-      : a ? '<b>'+a+'</b> commit'+(a>1?'s':'')+' on your machine that GitHub doesn’t have yet.'
-      : b ? 'GitHub has <b>'+b+'</b> commit'+(b>1?'s':'')+' you don’t have yet.'
-      : 'In sync with GitHub.';
+    note.innerHTML = (G.merging
+      ? '<b>Merge in progress.</b> Fix the file, then <code>git add</code>, then <code>git commit</code>.'
+      : !G.hasRemote
+        ? 'All on your machine. No GitHub connection yet.'
+        : G.diverged
+          ? '<b>Forked.</b> You and GitHub each have commits the other doesn’t — which is exactly why <code>git push</code> refuses.'
+        : a ? '<b>'+a+'</b> commit'+(a>1?'s':'')+' on your machine that GitHub doesn’t have yet.'
+        : b ? 'GitHub has <b>'+b+'</b> commit'+(b>1?'s':'')+' you don’t have yet.'
+        : 'In sync with GitHub.') + extra;
 
-    /* ---------- make sure the canvas exists ---------- */
+    /* ---------- canvas ---------- */
     if(!H.svg || !host.contains(H.svg)){
       host.innerHTML='';
       H={svg:svgEl('svg','hist'),edges:svgEl('g','hedges'),nodes:{},labels:{}};
@@ -1730,55 +1968,69 @@ function createGit(opts){
       host.appendChild(H.svg);
     }
     H.svg.setAttribute('viewBox','0 0 '+W+' '+H_);
-    H.svg.setAttribute('width',W);
-    H.svg.setAttribute('height',H_);
+    H.svg.setAttribute('width',W); H.svg.setAttribute('height',H_);
     H.svg.setAttribute('aria-label','Commit history. '+plain);
 
-    /* ---------- edges: rebuilt only when they actually change ----------
-       On a push nothing about the edges moves, so leaving them alone is what
-       stops the lines flickering underneath the sliding label. */
-    var sig=edges.map(function(e){
-      return e[0].key+'>'+e[1].key+'@'+e[0].x+','+e[0].y+'-'+e[1].x+','+e[1].y;
-    }).join('|');
+    /* ---------- edges, rebuilt only when they change ---------- */
+    var drawn=G.edges.filter(function(e){ return shown[e[0]] && shown[e[1]]; });
+    var sig=drawn.map(function(e){
+      var p=pos[e[0]], q=pos[e[1]];
+      return e[0]+'>'+e[1]+'@'+p.x+','+p.y+'-'+q.x+','+q.y;
+    }).join('|')+'#'+collapsed;
     if(sig!==H.edgeSig){
       H.edgeSig=sig;
       while(H.edges.firstChild) H.edges.removeChild(H.edges.firstChild);
-      edges.forEach(function(e){
-        var p=e[0], q=e[1], d;
-        if(p.y===q.y) d='M'+(p.x+R)+' '+p.y+' L'+(q.x-R)+' '+q.y;
-        else{ var mx=(p.x+q.x)/2;
-          d='M'+p.x+' '+(p.y+(q.y>p.y?R:-R))+' C'+p.x+' '+q.y+' '+mx+' '+q.y+' '+(q.x-R)+' '+q.y; }
+      function line(ax,ay,bx,by){
+        var d;
+        if(ay===by) d='M'+(bx+R)+' '+by+' L'+(ax-R)+' '+ay;
+        else{ var mx=(ax+bx)/2;
+          d='M'+bx+' '+(by+(ay>by?R:-R))+' C'+bx+' '+ay+' '+mx+' '+ay+' '+(ax-R)+' '+ay; }
         var path=svgEl('path','hedge');
         path.setAttribute('d',d); path.setAttribute('fill','none');
         path.setAttribute('stroke','var(--ink-3)'); path.setAttribute('stroke-width','2.5');
         H.edges.appendChild(path);
+      }
+      drawn.forEach(function(e){
+        var child=pos[e[0]], parent=pos[e[1]];
+        line(child.x,child.y,parent.x,parent.y);
       });
+      if(collapsed){
+        var first=all[0] && pos[all[0].sha];
+        if(first) line(first.x,first.y,PAD,YMID);
+      }
     }
 
-    /* ---------- nodes, keyed so they survive and can move ---------- */
+    /* ---------- nodes ---------- */
     var seen={};
-    nodes.forEach(function(nd){
-      seen[nd.key]=1;
-      var rec=H.nodes[nd.key], fresh=!rec;
+    function ensure(key,kind,label,px,py,isMerge){
+      seen[key]=1;
+      var rec=H.nodes[key], fresh=!rec;
       if(fresh){
         var g=svgEl('g','hnode');
-        var c=svgEl('circle'); c.setAttribute('r',R); c.setAttribute('stroke-width','2.5');
+        var c=svgEl('circle'); c.setAttribute('stroke-width','2.5');
         var t=svgEl('text');
-        t.setAttribute('text-anchor','middle'); t.setAttribute('y',26);
+        t.setAttribute('text-anchor','middle'); t.setAttribute('y',25);
         t.setAttribute('font-size','9'); t.setAttribute('fill','var(--ink-3)');
         g.appendChild(c); g.appendChild(t);
         H.svg.appendChild(g);
-        rec=H.nodes[nd.key]={g:g,c:c,t:t};
+        rec=H.nodes[key]={g:g,c:c,t:t};
         g.style.opacity='0';
       }
-      var st=NODE_STYLE[nd.kind];
+      var st=NODE_STYLE[kind];
+      rec.c.setAttribute('r', isMerge ? R+2 : R);
       rec.c.setAttribute('fill',st.fill);
       rec.c.setAttribute('stroke',st.stroke);
       if(st.dash) rec.c.setAttribute('stroke-dasharray',st.dash);
       else rec.c.removeAttribute('stroke-dasharray');
-      rec.t.textContent=nd.label;
-      moveTo(rec.g,nd.x,nd.y,!fresh);
+      rec.t.textContent=label;
+      moveTo(rec.g,px,py,!fresh);
       if(fresh) requestAnimationFrame(function(){ rec.g.style.opacity='1'; });
+    }
+
+    if(collapsed) ensure('__more','more','+'+collapsed,PAD,YMID,false);
+    all.forEach(function(n){
+      var p=pos[n.sha];
+      ensure(n.sha,n.kind,n.sha,p.x,p.y,n.merge);
     });
     Object.keys(H.nodes).forEach(function(k){
       if(seen[k]) return;
@@ -1787,28 +2039,36 @@ function createGit(opts){
       setTimeout(function(){ if(rec.g.parentNode) rec.g.parentNode.removeChild(rec.g); },360);
     });
 
-    /* ---------- the two pointers ---------- */
-    var same = mainNode && mainNode===originNode;
-    function pointer(key,text,colour,nd,dy){
-      var rec=H.labels[key], fresh=!rec;
-      if(!nd){
-        if(rec){ rec.style.opacity='0'; }
-        return;
-      }
+    /* ---------- refs, stacked where several land on one commit ---------- */
+    var stack={}, seenLab={};
+    G.refs.slice().sort(function(p,q){
+      return (q.head?1:0)-(p.head?1:0) || p.name.localeCompare(q.name);
+    }).forEach(function(ref){
+      var p=pos[ref.sha]; if(!p) return;
+      var k=ref.sha; stack[k]=(stack[k]||0);
+      var dy=-2 + stack[k]*13; stack[k]++;
+      seenLab[ref.name]=1;
+      var rec=H.labels[ref.name], fresh=!rec;
       if(fresh){
         rec=svgEl('text','hlab');
-        rec.setAttribute('fill',colour);
-        rec.textContent=text;
+        rec.textContent=(ref.head?'▸ ':'')+ref.name;
         H.svg.appendChild(rec);
-        H.labels[key]=rec;
+        H.labels[ref.name]=rec;
         rec.style.opacity='0';
       }
+      rec.textContent=(ref.head?'▸ ':'')+ref.name;
+      rec.setAttribute('fill', ref.kind==='remote' ? 'var(--steel)'
+                              : ref.head ? 'var(--amber)' : 'var(--ink-2)');
       rec.style.opacity='1';
-      moveTo(rec,nd.x+R+9,nd.y+dy,!fresh);
+      moveTo(rec,p.x+R+8,p.y+dy,!fresh);
       if(fresh) requestAnimationFrame(function(){ rec.style.opacity='1'; });
-    }
-    pointer('main','main','var(--amber)',mainNode, same?-2:4);
-    pointer('origin','origin/main','var(--steel)',G.hasRemote?originNode:null, same?12:4);
+    });
+    Object.keys(H.labels).forEach(function(n){
+      if(seenLab[n]) return;
+      var rec=H.labels[n]; delete H.labels[n];
+      rec.style.opacity='0';
+      setTimeout(function(){ if(rec.parentNode) rec.parentNode.removeChild(rec); },360);
+    });
   }
 
   function flow(kind){
@@ -1831,6 +2091,8 @@ function createGit(opts){
       o('This sandbox understands:','b');
       ['git init','git status','git add notes.txt','git commit -m "message"','git log --oneline',
        'git diff','git diff --staged','git restore notes.txt','git restore --staged notes.txt',
+       'git switch -c <name>','git switch <name>','git branch','git branch -d <name>',
+       'git merge <name>','git merge --abort',
        'git remote add origin <url>','git push -u origin main','git push','git fetch','git pull',
        'clear','reset'].forEach(function(l){o('  '+esc(l),'d')});
       o(''); return;
@@ -2116,6 +2378,175 @@ function createGit(opts){
   });
 })();
 
+/* ===================== the practical =====================
+   A second, independent sandbox. Tasks are graded on the repository's actual
+   state, not on what the student typed — so there are many right answers and
+   no way to pass by copying a string. */
+(function(){
+  var term=document.getElementById('xterm'), input=document.getElementById('xinput');
+  if(!term) return;
+  var git=createGit(), idx=0, passed={}, fixTip=null, revealed={};
+
+  function refSha(s,name){
+    var r=s.graph.refs.filter(function(x){ return x.name===name; })[0];
+    return r ? r.sha : null;
+  }
+
+  var TASKS=[
+    {t:'Start a repository',
+     b:'You are standing in an empty folder called <code>git-practice</code>. Turn it into a Git repository.',
+     h:'<code>git init</code>',
+     ok:function(s){ return s.init; }},
+
+    {t:'Create a file and put it in the basket',
+     b:'Create <code>notes.txt</code> using the <strong>Edit the file</strong> button, then stage it — but do <em>not</em> commit it yet.',
+     h:'Press <strong>Edit the file</strong>, then <code>git add notes.txt</code>. Check with <code>git status</code> — it should be under "Changes to be committed".',
+     ok:function(s){ return s.staged; }},
+
+    {t:'Commit it, with a specific message',
+     b:'Save it as a commit whose message is exactly <code>first commit</code>.',
+     h:'<code>git commit -m "first commit"</code> — the <code>-m</code> is what stops an editor opening.',
+     ok:function(s){ return s.graph.nodes.some(function(n){ return n.msg==='first commit'; }); }},
+
+    {t:'Get it onto GitHub',
+     b:'Connect this repository to <code>https://github.com/you/git-practice.git</code> and upload your work. It has never been pushed, so the branch has no upstream yet.',
+     h:'Two commands: <code>git remote add origin https://github.com/you/git-practice.git</code>, then <code>git push -u origin main</code>.',
+     ok:function(s){ return s.hasRemote && s.pushed>0; }},
+
+    {t:'Make a branch and move onto it',
+     b:'Create a branch called <code>fix-typo</code> and switch to it, in one command.',
+     h:'<code>git switch -c fix-typo</code>. The <code>-c</code> means create. <code>git branch</code> will show you where you are.',
+     ok:function(s){ return s.branch==='fix-typo'; }},
+
+    {t:'Do some work on the branch',
+     b:'Change the file and commit that change — on <code>fix-typo</code>, not on <code>main</code>.',
+     h:'Edit the file, <code>git add notes.txt</code>, then <code>git commit -m "fix the typo"</code>.',
+     ok:function(s){
+       if(s.branch!=='fix-typo') return false;
+       var f=refSha(s,'fix-typo'), m=refSha(s,'main');
+       if(f && m && f!==m){ fixTip=f; return true; }
+       return false;
+     }},
+
+    {t:'Merge it back into main',
+     b:'Get back onto <code>main</code> and bring the <code>fix-typo</code> work into it.',
+     h:'<code>git switch main</code>, then <code>git merge fix-typo</code>. Because main has not moved, this fast-forwards — no merge commit needed.',
+     ok:function(s){
+       if(s.branch!=='main' || s.merging) return false;
+       if(!fixTip) fixTip=refSha(s,'fix-typo');
+       if(!fixTip) return false;
+       return s.graph.nodes.some(function(n){ return n.sha===fixTip && n.onHead; });
+     }},
+
+    {t:'Tidy up the branch',
+     b:'The work is merged, so the branch has done its job. Delete it — using the <em>safe</em> delete, the one that refuses if the work is not merged.',
+     h:'<code>git branch -d fix-typo</code>. Lowercase <code>-d</code> is the safe one; <code>-D</code> forces it.',
+     ok:function(s){ return s.branches.indexOf('fix-typo')===-1; }},
+
+    {t:'Someone changed it on GitHub',
+     b:'While you were working, someone edited <code>notes.txt</code> on the website. GitHub now has a commit you do not. Get it onto your machine.',
+     h:'<code>git pull</code>. (Or <code>git fetch</code> then <code>git merge origin/main</code> — pull is those two in one.)',
+     setup:function(){ git.remoteCommit(); },
+     ok:function(s){ return s.hasRemote && s.behind===0 && !s.merging; }}
+  ];
+
+  document.getElementById('xtot').textContent=TASKS.length;
+
+  function esc(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function o(html,cls){
+    var d=document.createElement('div'); d.className='ln'+(cls?' '+cls:'');
+    d.innerHTML=html; term.appendChild(d); term.scrollTop=term.scrollHeight;
+  }
+  function emit(lines){ lines.forEach(function(l){ o(esc(l.t), l.c); }); }
+
+  function paintTask(){
+    var t=TASKS[idx];
+    document.getElementById('xnum').textContent=idx+1;
+    document.getElementById('xtitle').textContent=t.t;
+    var card=document.getElementById('xcard'), brief=document.getElementById('xbrief');
+    card.classList.toggle('pass',!!passed[idx]);
+    brief.innerHTML=(passed[idx]?'<span class="xdone">✓ done</span>':'')+t.b;
+    var hint=document.getElementById('xhint');
+    if(revealed[idx]){ hint.innerHTML='<strong>Hint.</strong> '+t.h; hint.classList.remove('hide'); }
+    else hint.classList.add('hide');
+    var n=0; for(var k in passed) if(passed[k]) n++;
+    document.getElementById('xscore').textContent=n+' of '+TASKS.length+' done';
+  }
+
+  function announce(){
+    var t=TASKS[idx];
+    o('');
+    o('<span class="b">── Task '+(idx+1)+' of '+TASKS.length+' ── '+esc(t.t)+'</span>');
+    if(t.setup) t.setup();
+    if(t.setup) emit([{t:'(something changed on github.com — check git status)',c:'d'}]);
+    paintTask();
+  }
+
+  function check(){
+    if(passed[idx]) return;
+    var t=TASKS[idx];
+    var okNow=false;
+    try{ okNow=t.ok(git.snapshot()); }catch(e){ okNow=false; }
+    if(!okNow) return;
+    passed[idx]=true;
+    o('');
+    o('<span class="g">✓ Task '+(idx+1)+' complete — '+esc(t.t)+'</span>');
+    paintTask();
+    if(idx<TASKS.length-1){
+      o('<span class="d">(moving on…)</span>');
+      setTimeout(function(){ idx++; announce(); },900);
+    } else {
+      var n=0; for(var k in passed) if(passed[k]) n++;
+      o('');
+      o('<span class="g">── All '+TASKS.length+' tasks done. '+n+' of '+TASKS.length+' passed. ──</span>');
+      o('<span class="d">You have just done, unaided, the whole thing: init, staging, commits,</span>','d');
+      o('<span class="d">a remote, a branch, a merge, a cleanup, and a pull. That is the job.</span>','d');
+    }
+  }
+
+  function run(raw){
+    var c=String(raw||'').trim();
+    if(!c) return;
+    if(c==='clear'){ term.innerHTML=''; return; }
+    o('<span class="g">$</span> <span class="u">'+esc(c)+'</span>');
+    if(c==='help'){
+      o('Same commands as the sandbox above. Try <span class="b">git status</span> when stuck.','d');
+      o(''); return;
+    }
+    var r=git.exec(c);
+    emit(r.lines);
+    check();
+  }
+
+  document.getElementById('x-edit').onclick=function(){
+    var r=git.editFile();
+    if(r.ok) o('<span class="g">$</span> <span class="d">(editor)</span>');
+    emit(r.lines); check();
+  };
+  document.getElementById('x-hint').onclick=function(){
+    revealed[idx]=true; paintTask();
+  };
+  document.getElementById('x-skip').onclick=function(){
+    if(idx>=TASKS.length-1){ o('<span class="d">(that is the last task)</span>'); return; }
+    o('<span class="d">(skipped — you can come back and restart any time)</span>');
+    idx++; announce();
+  };
+  document.getElementById('x-reset').onclick=function(){
+    git.reset(); idx=0; passed={}; revealed={}; fixTip=null;
+    term.innerHTML=''; boot();
+  };
+  input.addEventListener('keydown',function(ev){
+    if(ev.key==='Enter'){ run(input.value); input.value=''; }
+  });
+
+  function boot(){
+    o('<span class="d">A fresh, separate repository — nothing you did in the sandbox above counts here.</span>');
+    o('<span class="d">Do what each task asks. It is graded on the state of the repo, not on what you typed,</span>');
+    o('<span class="d">so any correct route works. Type </span><span class="b">git status</span><span class="d"> whenever you lose your bearings.</span>');
+    announce();
+  }
+  boot();
+})();
 /* ===================== sidebar ===================== */
 (function(){
   var body=document.body,
