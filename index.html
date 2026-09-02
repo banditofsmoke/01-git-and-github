@@ -97,16 +97,67 @@ kbd{background:var(--panel-2);border:1px solid var(--rule);border-bottom-width:2
   letter-spacing:.13em;font-size:.7rem;padding:.28rem .6rem;margin-bottom:.2rem}
 .p1 b{font-family:var(--f-mono);font-size:.78rem}
 
-/* nav */
-nav{position:sticky;top:0;z-index:60;background:var(--ground);border-bottom:1.5px solid var(--rule)}
-.nav-in{display:flex;gap:.1rem;overflow-x:auto;scrollbar-width:thin}
-nav a{font-family:var(--f-tag);font-weight:600;text-transform:uppercase;letter-spacing:.1em;
-  font-size:.71rem;color:var(--ink-2);text-decoration:none;white-space:nowrap;
-  padding:.8rem .6rem;border-bottom:2.5px solid transparent}
-nav a:hover{color:var(--ink);border-bottom-color:var(--rule)}
-nav a.on{color:var(--ink);border-bottom-color:var(--amber)}
-nav a b{color:var(--amber);font-weight:700;margin-right:.3rem}
-nav a.ok b::after{content:"✓";margin-left:.15rem}
+/* ---------- topbar ---------- */
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+#shell{transition:padding-left .25s ease}
+#topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:.6rem;
+  padding:.5rem clamp(.7rem,3vw,1.2rem);background:var(--ground);
+  border-bottom:1.5px solid var(--rule)}
+.iconbtn{display:inline-flex;align-items:center;gap:.45rem;border:1.5px solid var(--rule);
+  background:transparent;color:var(--ink-2);padding:.42rem .6rem;flex:none}
+.iconbtn:hover{background:var(--panel-2);color:var(--ink);border-color:var(--ink-3)}
+.bars{display:block;width:15px;height:11px;position:relative;flex:none}
+.bars::before,.bars::after{content:"";position:absolute;left:0;right:0;height:1.8px;
+  background:currentColor}
+.bars::before{top:0;box-shadow:0 4.6px 0 currentColor}
+.bars::after{bottom:0}
+.tb-menu{font-family:var(--f-tag);font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  font-size:.66rem}
+@media(max-width:520px){.tb-menu{display:none}}
+#homeBtn{display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink);
+  padding:.25rem .4rem;border:1.5px solid transparent}
+#homeBtn:hover{border-color:var(--rule);background:var(--panel)}
+#homeBtn svg{width:22px;height:22px;flex:none;display:block}
+#homeBtn span{font-family:var(--f-disp);font-weight:800;font-size:.88rem;letter-spacing:-.01em;
+  white-space:nowrap}
+@media(max-width:400px){#homeBtn span{display:none}}
+.tb-spacer{flex:1}
+.tb-pct{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-2);
+  font-variant-numeric:tabular-nums;flex:none}
+
+/* ---------- sidebar ---------- */
+#sidebar{position:fixed;top:0;left:0;bottom:0;width:264px;z-index:80;
+  background:var(--panel);border-right:1.5px solid var(--rule);
+  display:flex;flex-direction:column;
+  transform:translateX(-100%);transition:transform .25s ease;
+  overscroll-behavior:contain}
+body.nav-open #sidebar{transform:none}
+@media (prefers-reduced-motion:reduce){#sidebar{transition:none}}
+.sb-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;
+  padding:.75rem .9rem;border-bottom:1.5px solid var(--rule);flex:none}
+.sb-nav{flex:1;overflow-y:auto;padding:.5rem 0}
+.sb-group{font-family:var(--f-tag);font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+  font-size:.62rem;color:var(--ink-3);padding:.8rem .9rem .3rem}
+.sb-nav a{display:flex;align-items:baseline;gap:.55rem;text-decoration:none;
+  color:var(--ink-2);font-size:.87rem;padding:.4rem .9rem;
+  border-left:2.5px solid transparent;line-height:1.35}
+.sb-nav a:hover{background:var(--panel-2);color:var(--ink)}
+.sb-nav a.on{color:var(--ink);border-left-color:var(--amber);background:var(--panel-2)}
+.sb-nav a b{font-family:var(--f-mono);font-size:.72rem;color:var(--amber);font-weight:600;
+  flex:none;min-width:1.6em}
+.sb-nav a.ok b{color:var(--add)}
+.sb-nav a.ok b::after{content:"✓";margin-left:.1em}
+.sb-foot{flex:none;display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
+  border-top:1.5px solid var(--rule)}
+.sb-foot .prog{flex:1;margin:0}
+#backdrop{position:fixed;inset:0;z-index:70;background:rgba(10,12,9,.55);
+  opacity:0;pointer-events:none;transition:opacity .25s}
+body.nav-open #backdrop{opacity:1;pointer-events:auto}
+@media(min-width:1100px){
+  body.nav-open #shell{padding-left:264px}
+  body.nav-open #backdrop{opacity:0;pointer-events:none}
+}
 
 /* controls bar */
 .bar{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;justify-content:space-between;
@@ -349,7 +400,42 @@ img{max-width:100%}
 </head>
 <body>
 
-<header class="mast">
+<aside id="sidebar" aria-label="Contents">
+  <div class="sb-head">
+    <span class="tag">Contents</span>
+    <button type="button" id="sbClose" class="iconbtn" aria-label="Close contents">✕</button>
+  </div>
+  <nav class="sb-nav" id="sbNav"></nav>
+  <div class="sb-foot">
+    <div class="prog"><i id="progbar2"></i></div>
+    <span class="pct" id="pct2">0%</span>
+  </div>
+</aside>
+<div id="backdrop" hidden></div>
+
+<div id="shell">
+
+<div id="topbar">
+  <button type="button" id="navToggle" class="iconbtn" aria-label="Open contents"
+          aria-expanded="false" aria-controls="sidebar">
+    <span class="bars" aria-hidden="true"></span>
+    <span class="tb-menu">Menu</span>
+  </button>
+  <a href="#top" id="homeBtn" aria-label="Back to the top of the page">
+    <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <rect width="32" height="32" rx="7" fill="#161813"/>
+      <path d="M10 24V16a6 6 0 0 1 6-6h5" fill="none" stroke="#DFA43C"
+            stroke-width="2.25" stroke-linecap="round"/>
+      <circle cx="10" cy="24" r="3.6" fill="#DFA43C"/>
+      <circle cx="21" cy="10" r="3.6" fill="#78ADCB"/>
+    </svg>
+    <span>Git From Zero</span>
+  </a>
+  <span class="tb-spacer"></span>
+  <span class="tb-pct" id="pct3">0%</span>
+</div>
+
+<header class="mast" id="top">
   <div class="wrap"><div class="mast-in">
     <div class="p1"><b>P1</b> Solo mode · no second player needed</div>
     <h1>Git From <em>Zero</em>.</h1>
@@ -360,8 +446,6 @@ img{max-width:100%}
     in this browser — close the tab and come back.</p>
   </div></div>
 </header>
-
-<nav><div class="wrap"><div class="nav-in" id="nav"></div></div></nav>
 
 <main class="wrap">
 
@@ -679,6 +763,8 @@ img{max-width:100%}
   </footer>
 </main>
 
+</div><!-- /#shell -->
+
 <script>
 /* ===================== storage (never throws) ===================== */
 var STORE=(function(){
@@ -954,7 +1040,7 @@ var ACTS=[
 
 /* ===================== render acts ===================== */
 (function(){
-  var box=document.getElementById('acts'), nav=document.getElementById('nav');
+  var box=document.getElementById('acts'), nav=document.getElementById('sbNav');
   var KEY='gfz-ticks', state={};
   try{state=JSON.parse(STORE.get(KEY,'{}'))||{}}catch(e){state={}}
 
@@ -976,14 +1062,26 @@ var ACTS=[
     box.appendChild(d);
   });
 
-  nav.innerHTML=ACTS.map(function(a){
-    return '<a href="#act-'+a.n+'" data-act="'+a.n+'"><b>'+a.n+'</b>'+a.nav+'</a>';
-  }).join('')+
-    '<a href="#places"><b>·</b>Sandbox</a>'+
-    '<a href="#graph"><b>·</b>Merge/Rebase</a>'+
-    '<a href="#panic"><b>·</b>Errors</a>'+
-    '<a href="#ref"><b>·</b>Commands</a>'+
-    '<a href="#quiz"><b>·</b>Quiz</a>';
+  var REF=[['places','The Four Places'],['graph','Merge vs Rebase'],
+           ['conflict','Reading a Conflict'],['panic','When It Breaks'],
+           ['ref','Every Command'],['quiz','Check Yourself'],['player2','Adding Player 2']];
+  nav.innerHTML=
+    '<div class="sb-group">The walkthrough</div>'+
+    ACTS.map(function(a){
+      return '<a href="#act-'+a.n+'" data-act="'+a.n+'"><b>'+a.n+'</b><span>'+a.nav+'</span></a>';
+    }).join('')+
+    '<div class="sb-group">Look things up</div>'+
+    REF.map(function(r){
+      return '<a href="#'+r[0]+'"><b>·</b><span>'+r[1]+'</span></a>';
+    }).join('');
+
+  /* clicking a step opens it as well as jumping to it */
+  nav.addEventListener('click',function(e){
+    var a=e.target.closest('a'); if(!a)return;
+    var n=a.getAttribute('data-act');
+    if(n){ var d=document.getElementById('act-'+n); if(d) d.open=true; }
+    if(window.closeNavIfNarrow) window.closeNavIfNarrow();
+  });
 
   function actDone(n){
     var a=ACTS.filter(function(x){return x.n===n})[0];
@@ -994,8 +1092,12 @@ var ACTS=[
   function refresh(){
     var n=0; for(var k in state) if(state[k])n++;
     var p=total?Math.round(n/total*100):0;
-    document.getElementById('progbar').style.width=p+'%';
-    document.getElementById('pct').textContent=p+'%';
+    ['progbar','progbar2'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.style.width=p+'%';
+    });
+    ['pct','pct2','pct3'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.textContent=p+'%';
+    });
     ACTS.forEach(function(a){
       var done=actDone(a.n);
       document.getElementById('act-'+a.n).classList.toggle('done',done);
@@ -1781,16 +1883,50 @@ function createGit(opts){
   });
 })();
 
-/* ===================== nav highlight ===================== */
+/* ===================== sidebar ===================== */
 (function(){
-  var links=Array.prototype.slice.call(document.querySelectorAll('nav a'));
-  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
-  function upd(){
-    var y=window.scrollY+150,cur=0;
-    secs.forEach(function(s,i){if(s&&s.offsetTop<=y)cur=i});
-    links.forEach(function(a,i){a.classList.toggle('on',i===cur)});
+  var body=document.body,
+      tog=document.getElementById('navToggle'),
+      shut=document.getElementById('sbClose'),
+      back=document.getElementById('backdrop');
+  function wide(){ return window.matchMedia('(min-width:1100px)').matches; }
+
+  function set(open){
+    body.classList.toggle('nav-open',open);
+    tog.setAttribute('aria-expanded',open?'true':'false');
+    back.hidden=!open;
+    STORE.set('gfz-nav',open?'1':'0');
   }
-  window.addEventListener('scroll',upd,{passive:true});upd();
+  window.closeNavIfNarrow=function(){ if(!wide()) set(false); };
+
+  tog.onclick=function(){ set(!body.classList.contains('nav-open')); };
+  shut.onclick=function(){ set(false); };
+  back.onclick=function(){ set(false); };
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape' && body.classList.contains('nav-open') && !wide()) set(false);
+  });
+
+  // open by default on a wide screen, closed on a narrow one — then remember the choice
+  var saved=STORE.get('gfz-nav',null);
+  set(saved===null ? wide() : saved==='1');
+
+  document.getElementById('homeBtn').addEventListener('click',function(){
+    if(window.closeNavIfNarrow) window.closeNavIfNarrow();
+  });
+
+  /* scroll spy */
+  var links=Array.prototype.slice.call(document.querySelectorAll('#sbNav a'));
+  var secs=links.map(function(a){
+    try{ return document.querySelector(a.getAttribute('href')); }catch(e){ return null; }
+  });
+  function upd(){
+    var y=window.scrollY+170, cur=-1;
+    secs.forEach(function(s,i){ if(s && s.offsetTop<=y) cur=i; });
+    links.forEach(function(a,i){ a.classList.toggle('on', i===cur); });
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  window.addEventListener('resize',upd,{passive:true});
+  upd();
 })();
 </script>
 </body>
