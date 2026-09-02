@@ -93,8 +93,8 @@ Two guides, for two different situations. Both are current; neither replaces the
 
 | Guide | Use it when |
 |---|---|
-| [`LESSON-PLAN.md`](LESSON-PLAN.md) | The learner works through **the site** at their own pace and you coach. One-to-one, a group, or over a call. Mirrors the site's nine steps and adds timings, what to say, where people stall, and a checkpoint question for each. |
-| [`LESSON-PLAN-PAIRED.md`](LESSON-PLAN-PAIRED.md) | You want the **two-person lesson** — you and one learner sharing a repo, both pushing, conflicting with each other for real. Needs two machines and two GitHub accounts. |
+| [`LESSON-PLAN.md`](LESSON-PLAN.md) | The learner works through **the site** at their own pace and you coach. One-to-one, a group, or over a call. Mirrors the site's ten steps and adds timings, what to say, where people stall, and a checkpoint question for each — plus which sandbox drill to run *before* each command, and how to read the practical as assessment. |
+| [`LESSON-PLAN-PAIRED.md`](LESSON-PLAN-PAIRED.md) | You want the **two-person lesson** — you and one learner sharing a repo, both pushing, conflicting with each other for real. Needs two machines and two GitHub accounts. Uses the site's sandbox for rehearsal and its practical as the closer. |
 
 The short version of both: the site does the explaining, so the teacher's job is unsticking,
 checking understanding, and **not taking the keyboard.**

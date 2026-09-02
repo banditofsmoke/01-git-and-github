@@ -18,19 +18,25 @@
 ## The original plan — two people, one file
 
 **Teacher's run-of-show.** This is the script you follow. The student never reads this file —
-he reads `index.html` (open it in a browser), which is the visual companion.
+he uses the site at **[git-lesson.sletchersystems.com](https://git-lesson.sletchersystems.com/)**,
+which is the visual companion. You only need two parts of it for this lesson: **section 02, the
+sandbox**, and **section 08, the practical**. Everything else there is the solo course, which this
+lesson replaces.
 
 | | |
 |---|---|
 | Shape | Two people, two machines, one shared repo, one `index.html` |
+| Companion | [git-lesson.sletchersystems.com](https://git-lesson.sletchersystems.com/) — sections 02 and 08 |
 | Core path | Acts 0–5, about 75 minutes |
 | The good bit | Act 6 — a *deliberately staged* merge conflict, about 25 minutes |
 | Stretch | Act 7, as far as time allows |
 | Verified against | git 2.44.0.windows.1, gh 2.55.0 — your machine, checked 2026-09-02 |
 
-> **Two different `index.html` files exist today. Don't mix them up.**
-> `01-git-and-github/index.html` (this folder) is the **teaching aid** — it is not in the lesson repo.
-> The `index.html` you and the student build live is a **brand new file in a brand new repo**.
+> **Two different `index.html` files exist. Don't mix them up.**
+> The one in this folder is the **teaching site** (published at git-lesson.sletchersystems.com).
+> The `index.html` you and the student build live is a **brand new file in a brand new repo** and
+> has nothing to do with it. If the name is going to confuse him, call the practice file
+> `page.html` instead — nothing in this plan depends on it.
 
 ---
 
@@ -48,12 +54,62 @@ between them. If he leaves understanding only this, the lesson worked:
 ```
 
 Almost every beginner problem is *"I thought my change was in a different place than it was."*
-Keep pointing at this diagram. It is the first panel of the visual aid, and it's interactive —
-he can type commands into it and watch the file move.
+Keep pointing at this diagram. It is **section 02 of the site**, and it is interactive — he can
+type real commands into it and watch the files move, with no way to break anything.
 
 **Teach `git status` as the answer to everything.** Run it after literally every command in Act 1.
 It tells you which of the four places your work is sitting in, and it *suggests the next command*.
 A student who reflexively types `git status` is a student who can get himself unstuck.
+
+---
+
+## Two tools on the site, and how to use them with two people
+
+You are not teaching from the site — you are teaching from this script. But two of its sections
+do things a paired lesson cannot do on its own.
+
+### The sandbox (section 02) — rehearse, then do it for real
+
+It is a working simulation of Git: branches, merges, rebases, conflicts, `.gitignore`, the undo
+family. Nothing in it touches either machine.
+
+**With two people you get something the solo learner cannot have: you can both run the same drill
+side by side and compare.** That is worth using deliberately.
+
+| Before this act | Both of you run this in the sandbox | Why it helps here |
+|---|---|---|
+| Act 1 (`git add`) | Edit two files, stage only one | Answers "why doesn't commit just save everything?" before he asks it |
+| Act 1 (`git diff`) | `git add`, then `git diff`, then `git diff --staged` | The empty output surprises him somewhere harmless |
+| **Act 6 (the conflict)** | **Press "Someone edits on GitHub", then try to push** | **He sees the graph fork, and a rejected push, before it happens to him for real** |
+| Act 7 (undo) | `git reset --hard HEAD~1`, then `git reflog` | Watching a commit come back does the emotional work |
+
+**The Act 6 rehearsal is the one to insist on.** A conflict you have already seen once in a
+simulation is a puzzle; a conflict you have never seen, on work you care about, with your teacher
+watching, is a panic.
+
+**Do not let it replace the real thing.** The sandbox is a rehearsal room. The point of this lesson
+is that two real people push to one real repo.
+
+### The practical (section 08) — how you find out if it landed
+
+Eleven tasks in their own separate sandbox, graded on the **state of the repository** rather than
+on what was typed. There is no way to pass it by copying a string out of this plan.
+
+**Use it as the closer, or as homework.** Not during the lesson — this lesson is already full.
+Send it to him afterwards and ask which task number he got stuck on. That single number tells you
+what to re-teach far better than "how did you find it?" ever will.
+
+Two tasks are worth knowing about in advance:
+
+- **Task 4** hands him two changed files and asks him to stage one. He will reach for
+  `git add .` and it will fail him. That is the only place anyone finds out that `git add .` is
+  not automatically the right answer.
+- **Task 11** destroys a commit and asks him to get it back. If he can do that, he is not
+  frightened of Git any more, which is most of the battle.
+
+> **A note on doing this with two learners.** If you are teaching two people rather than one,
+> have them do the practical separately and then compare where each stalled. The differences are
+> the syllabus for your next session.
 
 ---
 
@@ -100,7 +156,8 @@ in order of preference:
 - [ ] He has a GitHub account and is logged in on the web
 - [ ] `user.name` / `user.email` set on his machine
 - [ ] You have decided the repo name (`git-lesson` below — anything is fine)
-- [ ] Both of you can open `01-git-and-github/index.html` in a browser
+- [ ] Both of you can open [git-lesson.sletchersystems.com](https://git-lesson.sletchersystems.com/)
+- [ ] You have run its **section 08 practical** yourself once, so you know what he will hit
 - [ ] He knows how to open a terminal in a folder
 
 ---
@@ -183,9 +240,10 @@ Changes to be committed:
 > *some* of your changes and not others — you fixed a bug and also renamed a variable, and those
 > should be two separate commits.
 >
-> **Let him play with the simulator in `index.html` (section 1) here.** Three minutes of typing
-> `git add` and `git restore --staged` and watching the block move is worth ten minutes of you
-> explaining it.
+> **Send him to the sandbox — section 02 of the site — right here.** Have him edit *two* files
+> and `git add` only one, then look at boxes 1 and 2. Three minutes of that is worth ten minutes
+> of you explaining why staging exists, because it answers the question he is actually forming:
+> *why doesn't `git commit` just save everything?*
 
 ```bash
 git commit -m "Add page skeleton"
@@ -567,6 +625,10 @@ git merge --abort       # same, for a merge
 ---
 
 ## Act 7 — Stretch, if time (as far as you get)
+
+> **All of these now work in the sandbox** (section 02 of the site), including `stash`, the three
+> `reset` modes, `reflog`, `revert`, `rebase` and `commit --amend`. If time is short, demonstrate
+> them there instead of on the real repo — it is faster, and nothing can go wrong.
 
 Pick from these — each is 3–5 minutes standalone. They're in the visual aid's command reference too.
 
