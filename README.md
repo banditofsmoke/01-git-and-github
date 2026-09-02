@@ -1,51 +1,70 @@
-# Git & GitHub — a complete first lesson
+# Git From Zero
 
-Teaching materials for a live, two-person Git lesson. Two files, two different readers.
+A self-paced walkthrough that takes someone from *never having opened a terminal* to a real
+repository on GitHub — with branches, a pull request, and a merge conflict they caused on
+purpose and fixed.
 
-| File | Who reads it | What it is |
-|---|---|---|
-| [`index.html`](index.html) | **The student** | An interactive visual aid. Open it in any browser — no build step, no server, no dependencies. |
-| [`LESSON-PLAN.md`](LESSON-PLAN.md) | **The teacher** | The run of show. Acts with minute budgets, exact commands, expected output, and a table of what will go wrong. |
+### → **[git-lesson.sletchersystems.com](https://git-lesson.sletchersystems.com/)**
 
-Built around one idea: **a change lives in exactly one of four places, and every command just
-moves it between them.**
+That link is the thing. This repo just holds it.
 
-## What's in the student's page
+## Who it's for
 
-- **A working simulator.** Type `git init`, `add`, `commit`, `push`, `diff`, `restore` into a
-  console and watch the file move between the working directory, staging, the local repo and the
-  remote. The output is real git output, and the status colours match your terminal's.
-- **An animated merge-vs-rebase graph.** Press rebase and the commit shas visibly change — the
-  detail that makes "rewriting history" finally click.
-- **A clickable conflict block** showing that `<<<<<<< HEAD` means *opposite* things in a merge
+Anyone with zero Git experience, working **alone**. Most Git tutorials assume you already know
+what a terminal is, or that a second person is available to practise with. This one assumes
+neither: it starts at "here is how to open a terminal" and every exercise works solo, including
+the merge conflict.
+
+## What's in it
+
+- **A live sandbox.** Type `git init`, `add`, `commit`, `push`, `diff`, `restore` into a fake
+  terminal and watch a file move between the four places a change can live. Real Git output.
+- **A merge-vs-rebase visualiser** where the commit IDs visibly change on rebase — the detail
+  that makes "rewriting history" finally click.
+- **A clickable conflict block** showing that `<<<<<<< HEAD` means *opposite things* in a merge
   and in a rebase, which is how people end up deleting their own work.
-- A panic table of the errors beginners actually hit, 51 filterable commands, and a short quiz.
+- Per-OS commands (Windows / macOS / Linux), a table of the errors beginners actually hit,
+  54 filterable commands, and a quiz.
 
-## The shape of the lesson
+## Running it yourself
 
-Two people, two machines, one shared repo, one `index.html` built together — the student added
-as a **collaborator**, not working from a fork. Acts 0–5 are a complete lesson on their own
-(~75 min). Act 6 stages a merge conflict on purpose; if the clock is against you, make it lesson
-two rather than rushing it.
-
-## One setup step worth doing first
+One file, no build step, no dependencies, no package manager:
 
 ```bash
-git config --global init.defaultBranch main
+git clone https://github.com/banditofsmoke/01-git-and-github.git
+cd 01-git-and-github
 ```
 
-Without it, `git init` creates a branch called `master` while GitHub expects `main`, and your
-first push fails in a way that is genuinely confusing to explain mid-lesson. This repo's own
-first push failed on exactly that.
+Then just open `index.html` in a browser. That's it — it works offline, including the sandbox.
+To serve it over HTTP instead:
 
-## Hosting it
+```bash
+python -m http.server 8000
+```
 
-`index.html` is fully static and self-contained. Point any static host at the repo root and it
-serves as-is — no build command, no output directory, no framework.
+## Built with
+
+Nothing. Hand-written HTML, CSS and vanilla JavaScript in a single file. The only external
+request is to Google Fonts; block it and the page falls back to system fonts and still works.
+
+## Privacy
+
+No accounts, no analytics, no tracking, no database, no server-side anything. Your progress,
+your chosen OS and your theme are kept in your own browser's `localStorage` and never leave your
+machine. If your browser blocks site storage, the page says so and everything still works —
+you just don't get progress saved.
+
+## Also here
+
+[`LESSON-PLAN.md`](LESSON-PLAN.md) is a **teacher's run-of-show** for delivering this as a live
+two-person lesson — acts with minute budgets, exact commands, and a table of what goes wrong.
+It's the teacher-led variant the solo page grew out of. If you're learning on your own you don't
+need it; if you're teaching someone else, start there.
 
 ## Notes
 
-Command output was captured from a real repository on git 2.44 rather than written from memory —
-including the conflict markers, whose sides really do swap between merge and rebase.
-
-Works offline. Remembers your checklist progress and theme in your own browser only.
+Command output was captured from a real repository rather than written from memory — including
+the conflict markers, whose sides genuinely do swap between a merge and a rebase. Install
+instructions were checked against [git-scm.com/install](https://git-scm.com/install/) rather
+than assumed; the old `git-scm.com/downloads` URL now redirects, and the macOS binary installer
+was discontinued in 2021.
