@@ -288,6 +288,66 @@ describe('when GitHub is ahead of you', () => {
   });
 });
 
+describe('the history graph', () => {
+  const g2 = g => g.snapshot().graph;
+
+  it('is empty before anything happens', () => {
+    const s = g2(fresh());
+    eq(s.total, 0, 'total'); eq(s.diverged, false, 'diverged');
+  });
+  it('a new commit is local-only until pushed', () => {
+    const g = committed();
+    eq(g2(g).shared.length, 0, 'shared');
+    eq(g2(g).localOnly.length, 1, 'localOnly');
+  });
+  it('pushing moves it from local-only to shared', () => {
+    const g = pushed();
+    eq(g2(g).shared.length, 1, 'shared');
+    eq(g2(g).localOnly.length, 0, 'localOnly');
+    eq(g2(g).diverged, false, 'diverged');
+  });
+  it('a website edit shows as remote-only, and is NOT a fork on its own', () => {
+    const g = pushed(); g.remoteCommit();
+    const s = g2(g);
+    eq(s.remoteOnly.length, 1, 'remoteOnly');
+    eq(s.localOnly.length, 0, 'localOnly');
+    eq(s.diverged, false, 'origin merely being ahead is not a divergence');
+  });
+  it('commits on BOTH sides is what counts as diverged', () => {
+    const g = pushed(); g.remoteCommit();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    const s = g2(g);
+    eq(s.diverged, true, 'diverged');
+    eq(s.localOnly.length, 1, 'localOnly');
+    eq(s.remoteOnly.length, 1, 'remoteOnly');
+    // and this is exactly the state in which push refuses
+    eq(g.exec('git push').ok, false, 'push refuses while diverged');
+  });
+  it('pulling heals the fork', () => {
+    const g = pushed(); g.remoteCommit();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    g.exec('git pull');
+    const s = g2(g);
+    eq(s.diverged, false, 'no longer forked');
+    eq(s.remoteOnly.length, 0, 'nothing left on origin only');
+    ok(s.localOnly.length > 0, 'but you now have commits to push');
+  });
+  it('pushing after the pull leaves everything shared', () => {
+    const g = pushed(); g.remoteCommit();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    g.exec('git pull'); g.exec('git push');
+    const s = g2(g);
+    eq(s.localOnly.length, 0, 'localOnly');
+    eq(s.remoteOnly.length, 0, 'remoteOnly');
+    eq(s.shared.length, s.total, 'everything is shared');
+  });
+  it('every commit carries a sha and a message for the labels', () => {
+    const s = g2(committed());
+    ok(s.localOnly[0].sha, 'sha');
+    ok(s.localOnly[0].msg, 'msg');
+  });
+});
+
 describe('the guided "do the next thing" button', () => {
   it('suggests init first, and edit second', () => {
     const g = fresh();

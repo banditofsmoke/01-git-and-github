@@ -19,6 +19,8 @@ the merge conflict.
 
 - **A live sandbox.** Type `git init`, `add`, `commit`, `push`, `diff`, `restore` into a fake
   terminal and watch a file move between the four places a change can live. Real Git output.
+- **A live commit graph** beside it, showing `main` and `origin/main` as two pointers into a
+  chain — so "ahead by 2", a rejected push, and a genuine fork stop being abstract.
 - **A merge-vs-rebase visualiser** where the commit IDs visibly change on rebase — the detail
   that makes "rewriting history" finally click.
 - **A clickable conflict block** showing that `<<<<<<< HEAD` means *opposite things* in a merge

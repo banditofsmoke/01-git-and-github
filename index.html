@@ -305,6 +305,22 @@ section{padding:clamp(2.6rem,6vw,4rem) 0 0}
 .legend .g{color:var(--add);border-color:var(--add)}
 .legend .b{color:var(--steel);border-color:var(--steel)}
 
+/* history graph inside the sandbox */
+.histwrap{margin-top:1rem;border:1.5px solid var(--rule);background:var(--inset)}
+.histhead{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;
+  padding:.55rem .8rem;border-bottom:1px solid var(--rule-soft)}
+.histnote{font-size:.83rem;color:var(--ink-2)}
+.histnote b{color:var(--ink);font-weight:600}
+.histscroll{overflow-x:auto;padding:.2rem 0 .1rem}
+svg.hist{display:block;height:auto}
+svg.hist .hnode{transition:transform .45s cubic-bezier(.65,0,.35,1)}
+svg.hist .hedge{transition:opacity .35s}
+svg.hist text{font-family:var(--f-mono)}
+.hlab{font-family:var(--f-tag);font-weight:700;font-size:10px;text-transform:uppercase;
+  letter-spacing:.08em}
+.hempty{font-size:.85rem;color:var(--ink-3);padding:1.1rem .8rem}
+@media (prefers-reduced-motion:reduce){svg.hist .hnode{transition:none}}
+
 /* terminal sim */
 .term{background:var(--term-bg);color:var(--term-ink);font-family:var(--f-mono);font-size:.79rem;
   line-height:1.55;padding:.8rem .9rem;height:265px;overflow-y:auto;margin-top:1rem;
@@ -531,6 +547,14 @@ img{max-width:100%}
         <span><b class="g">green</b> in the basket, ready to commit</span>
         <span><b class="b">blue</b> committed</span>
         <span style="color:var(--ink-3)">Same colours your real terminal uses.</span>
+      </div>
+
+      <div class="histwrap">
+        <div class="histhead">
+          <span class="tag">Your history</span>
+          <span class="histnote" id="histNote">Nothing committed yet.</span>
+        </div>
+        <div class="histscroll" id="histScroll"></div>
       </div>
 
       <div class="term" id="term"></div>
@@ -1234,6 +1258,23 @@ function createGit(opts){
   function ahead(){ return S.local.length - S.pushed; }
   function behind(){ return S.remoteOnly.length; }
 
+  /* What the history looks like, as two pointers into a chain of commits.
+     shared     — commits both you and origin have
+     localOnly  — yours, not pushed yet        (main is ahead)
+     remoteOnly — origin's, not yours yet      (origin/main is ahead)
+     diverged   — both of the above at once, which is what makes push refuse */
+  function graph(){
+    var shared     = S.local.slice(0, S.pushed);
+    var localOnly  = S.local.slice(S.pushed);
+    var remoteOnly = S.remoteOnly.slice();
+    return {
+      shared:shared, localOnly:localOnly, remoteOnly:remoteOnly,
+      diverged: localOnly.length>0 && remoteOnly.length>0,
+      hasRemote:S.hasRemote,
+      total: shared.length + localOnly.length + remoteOnly.length
+    };
+  }
+
   /* ---- output helpers ---- */
   var buf;
   function w(t,c){ buf.push({t:t, c:c||''}); }
@@ -1523,6 +1564,7 @@ function createGit(opts){
   return {
     exec:exec, editFile:editFile, remoteCommit:remoteCommit, suggest:suggest,
     reset:function(){ reset(); },
+    graph:graph,
     snapshot:function(){
       return {
         init:S.init, exists:S.exists, wd:S.wd,
@@ -1532,7 +1574,8 @@ function createGit(opts){
         remoteOnly:S.remoteOnly.length, fetched:S.fetched,
         hasRemote:S.hasRemote, upstream:S.upstream,
         ahead:ahead(), behind:behind(),
-        lastSha:S.local.length?S.local[S.local.length-1].sha:null
+        lastSha:S.local.length?S.local[S.local.length-1].sha:null,
+        graph:graph()
       };
     }
   };
@@ -1578,6 +1621,109 @@ function createGit(opts){
     btn.setAttribute('data-cmd',n.cmd);
     document.getElementById('nextLabel').textContent=n.label;
     document.getElementById('nextCmd').textContent = n.cmd==='@edit' ? '(edit the file)' : n.cmd;
+
+    drawHistory(S.graph);
+  }
+
+  /* ---- the commit graph: two pointers into a chain ---- */
+  function drawHistory(G){
+    var host=document.getElementById('histScroll'), note=document.getElementById('histNote');
+
+    if(!G.total){
+      host.innerHTML='<div class="hempty">Nothing committed yet — commits will appear here, '+
+        'with a marker showing where <code>main</code> and <code>origin/main</code> point.</div>';
+      note.textContent='';
+      return;
+    }
+
+    var R=13, GAP=68, PAD=32, YMID=75, YUP=35, YDN=115;
+    var shared=G.shared.slice(), collapsed=0;
+    if(shared.length>4){ collapsed=shared.length-3; shared=shared.slice(-3); }
+
+    var nodes=[], edges=[], x=PAD, prev=null;
+    function add(kind,c,y){ var nd={kind:kind,c:c,x:x,y:y}; nodes.push(nd); return nd; }
+
+    if(collapsed){ prev=add('more',{n:collapsed},YMID); x+=GAP; }
+    shared.forEach(function(c){
+      var nd=add('shared',c,YMID); if(prev)edges.push([prev,nd]); prev=nd; x+=GAP;
+    });
+
+    var mainNode=prev, originNode=prev;
+
+    if(!G.diverged){
+      var tail = G.localOnly.length ? G.localOnly : G.remoteOnly;
+      var kind = G.localOnly.length ? 'local' : 'remote';
+      tail.forEach(function(c){
+        var nd=add(kind,c,YMID); if(prev)edges.push([prev,nd]); prev=nd; x+=GAP;
+      });
+      if(tail.length){ if(kind==='local') mainNode=prev; else originNode=prev; }
+    } else {
+      var forkX=x, pUp=prev, pDn=prev, xUp, xDn;
+      x=forkX;
+      G.remoteOnly.forEach(function(c){
+        var nd=add('remote',c,YUP); if(pUp)edges.push([pUp,nd]); pUp=nd; x+=GAP;
+      });
+      xUp=x; x=forkX;
+      G.localOnly.forEach(function(c){
+        var nd=add('local',c,YDN); if(pDn)edges.push([pDn,nd]); pDn=nd; x+=GAP;
+      });
+      x=Math.max(xUp,x);
+      originNode=pUp; mainNode=pDn;
+    }
+
+    var W=Math.max(x+120,420), H=150;
+    var svg=['<svg class="hist" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+
+             '" role="img" aria-label="Commit history">'];
+
+    edges.forEach(function(e){
+      var a=e[0], b=e[1], d;
+      if(a.y===b.y) d='M'+(a.x+R)+' '+a.y+' L'+(b.x-R)+' '+b.y;
+      else{ var mx=(a.x+b.x)/2;
+        d='M'+a.x+' '+(a.y+(b.y>a.y?R:-R))+' C'+a.x+' '+b.y+' '+mx+' '+b.y+' '+(b.x-R)+' '+b.y; }
+      svg.push('<path class="hedge" d="'+d+'" fill="none" stroke="var(--ink-3)" stroke-width="2.5"/>');
+    });
+
+    nodes.forEach(function(nd){
+      var fill,stroke,dash='';
+      if(nd.kind==='shared'){ fill='var(--steel-wash)'; stroke='var(--steel)'; }
+      else if(nd.kind==='local'){ fill='var(--amber-wash)'; stroke='var(--amber)'; }
+      else if(nd.kind==='remote'){ fill='none'; stroke='var(--steel)'; dash=' stroke-dasharray="3 3"'; }
+      else { fill='none'; stroke='var(--rule)'; dash=' stroke-dasharray="2 3"'; }
+      svg.push('<g class="hnode"><circle cx="'+nd.x+'" cy="'+nd.y+'" r="'+R+
+        '" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2.5"'+dash+'/>');
+      if(nd.kind==='more'){
+        svg.push('<text x="'+nd.x+'" y="'+(nd.y+4)+'" text-anchor="middle" font-size="12" fill="var(--ink-3)">⋯</text>');
+        svg.push('<text x="'+nd.x+'" y="'+(nd.y+26)+'" text-anchor="middle" font-size="9" fill="var(--ink-3)">+'+nd.c.n+'</text>');
+      } else {
+        svg.push('<text x="'+nd.x+'" y="'+(nd.y+26)+'" text-anchor="middle" font-size="9" fill="var(--ink-3)">'+nd.c.sha+'</text>');
+      }
+      svg.push('</g>');
+    });
+
+    function pill(nd,text,colour,dy){
+      if(!nd) return;
+      svg.push('<text class="hlab" x="'+(nd.x+R+9)+'" y="'+(nd.y+dy)+'" fill="'+colour+'">'+text+'</text>');
+    }
+    var same = mainNode && mainNode===originNode;
+    if(same){
+      pill(mainNode,'main','var(--amber)',-2);
+      if(G.hasRemote) pill(originNode,'origin/main','var(--steel)',12);
+    } else {
+      pill(mainNode,'main','var(--amber)',4);
+      if(G.hasRemote) pill(originNode,'origin/main','var(--steel)',4);
+    }
+
+    svg.push('</svg>');
+    host.innerHTML=svg.join('');
+
+    var a=G.localOnly.length, b=G.remoteOnly.length;
+    note.innerHTML = !G.hasRemote
+      ? 'All on your machine. No GitHub connection yet.'
+      : G.diverged
+        ? '<b>Forked.</b> You and GitHub each have commits the other doesn’t — which is exactly why <code>git push</code> refuses.'
+      : a ? '<b>'+a+'</b> commit'+(a>1?'s':'')+' on your machine that GitHub doesn’t have yet.'
+      : b ? 'GitHub has <b>'+b+'</b> commit'+(b>1?'s':'')+' you don’t have yet.'
+      : 'In sync with GitHub.';
   }
   function flow(kind){
     var id={add:'c-add',commit:'c-commit',push:'c-push',pull:'c-push'}[kind];
