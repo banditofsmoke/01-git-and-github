@@ -473,7 +473,7 @@ img{max-width:100%}
     <p class="sub">You have never used Git. You have maybe never used a terminal. By the end of
     this page you will have a real repository on GitHub, built by you, with branches, a pull
     request and a merge conflict you caused on purpose and fixed.</p>
-    <p class="sub" style="font-size:.95rem">Nine steps, at your own pace. Your progress is saved
+    <p class="sub" style="font-size:.95rem">Ten steps, at your own pace. Your progress is saved
     in this browser — close the tab and come back.</p>
   </div></div>
 </header>
@@ -610,6 +610,11 @@ img{max-width:100%}
         <button type="button" class="gh" data-run="git branch">git branch</button>
         <button type="button" class="gh" data-run="git merge feature">git merge feature</button>
         <button type="button" class="gh" data-run="git branch -d feature">git branch -d feature</button>
+        <button type="button" class="gh" data-run="git rebase main">git rebase main</button>
+        <button type="button" class="gh" data-run="git stash">git stash</button>
+        <button type="button" class="gh" data-run="git stash pop">git stash pop</button>
+        <button type="button" class="gh" data-run="git reset --hard HEAD~1">git reset --hard HEAD~1</button>
+        <button type="button" class="gh" data-run="git reflog">git reflog</button>
       </div>
     </div>
 
@@ -1115,7 +1120,25 @@ var ACTS=[
       cmd('git reset --hard')+
       '<p><code>--hard</code> throws away your uncommitted changes as well as the commit. Committed work can be recovered with <code>reflog</code>; <strong>uncommitted work cannot be recovered by anything.</strong></p>'+
       '<p style="margin-top:.4rem">Which is the entire argument for committing early and often. A commit is a save point, and save points are free.</p></div>'},
-   {b:'<div class="tip"><span class="tag">You made it</span><p>You now have a real repository with branches, a merged pull request, a closed issue and a conflict you fixed yourself. That is genuinely further than most people get in a first week.</p><p style="margin-top:.4rem">The way to keep it is to <strong>use it on something real</strong> — put your next project in a repo from day one, even a tiny one. Everything above becomes automatic within a fortnight.</p></div>'}]}
+   {b:'<div class="tip"><span class="tag">That is the hard part done</span><p>You now have a real repository with branches, a merged pull request, a closed issue and a conflict you fixed yourself. That is genuinely further than most people get in a first week.</p><p style="margin-top:.4rem">One step left, and it is the fun one — something permanent, public, and yours.</p></div>'}]},
+
+ {n:'09',t:'Build your GitHub profile page',m:'20 min',nav:'Your profile',
+  goal:'Use everything so far to build something <strong>real that stays</strong>: the page people see when they visit your GitHub profile. It is a normal repository with one hidden trick.',
+  steps:[
+   {b:'<div class="note"><span class="tag">The trick</span><p>If you make a repository whose name is <strong>exactly your username</strong>, GitHub treats its <code>README.md</code> as your profile page. Most people never find out this exists. It is the same Git you have been doing all along — no new commands.</p></div>'},
+   {b:'<p><strong>Create the repository.</strong> On GitHub: <strong>+ → New repository</strong>. The name must match your username <em>character for character</em>. It must be <strong>Public</strong>, or nobody can see it.</p>'+
+      '<p style="margin-top:.4rem">GitHub will show a little banner saying you found a secret. That is how you know you spelled it right.</p>'},
+   {b:'<div class="warn"><span class="tag">This time, DO tick "Add a README"</span><p>In Step 04 that box was the thing to avoid. Here it is the right call, and the reason is worth understanding rather than memorising: back then you already had commits on your laptop, so a commit made by GitHub created a <em>second, unrelated history</em>. This time there is nothing on your machine yet — so there is nothing to clash with.</p><p style="margin-top:.4rem">Rules like "never tick the box" are how people get stuck. Knowing <em>why</em> is how you get unstuck.</p></div>'},
+   {b:'<p><strong>Bring it down to your machine.</strong></p>'+
+      cmd('git clone https://github.com/YOUR-NAME/YOUR-NAME.git\ncd YOUR-NAME')+
+      '<p style="margin-top:.4rem">Yes, your username twice — once as the owner, once as the repository.</p>'},
+   {b:'<p><strong>Write it.</strong> Open <code>README.md</code> in your editor. It is Markdown — plain text with a few marks that become formatting:</p>'+
+      '<div class="cmd"><pre># Your Name\n\nOne line about what you do.\n\n## What I am working on\n\n- Learning Git, properly\n- **Bold** for emphasis, *italics* like this\n- [A link](https://example.com)\n\n`inline code` looks like this\n</pre><button type="button" class="cp" data-c="# Your Name&#10;&#10;One line about what you do.&#10;&#10;## What I am working on&#10;&#10;- Learning Git, properly&#10;">copy</button></div>'+
+      '<p style="margin-top:.4rem">Keep it short. A good profile is three lines and a link, not an autobiography.</p>'},
+   {b:'<p><strong>Ship it.</strong> Nothing new here — this is the loop from Step 03.</p>'+
+      cmd('git status\ngit add README.md\ngit commit -m "Write my profile"\ngit push')},
+   {b:'<p><strong>Go and look.</strong> Visit <code>github.com/YOUR-NAME</code>. Your words are on your profile.</p>'+
+      '<div class="tip"><span class="tag">Why this one matters</span><p>Everything before this was practice you would throw away. This is the first thing you have made with Git that you will actually keep — and every future edit to it uses exactly the four commands you already know.</p><p style="margin-top:.4rem"><strong>The habit that makes it stick:</strong> put your next project in a repo on day one, however small. Everything on this page becomes automatic in a fortnight of ordinary use, and evaporates in a month of none.</p></div>'}]}
 ];
 
 /* ===================== render acts ===================== */
@@ -1303,7 +1326,7 @@ function createGit(opts){
           HEAD:'main',
           remoteRefs:{},   // branch -> sha, as origin has it
           lanes:{main:0}, nextLane:1,
-          hasRemote:false, upstream:{}, fetched:true,
+          hasRemote:false, upstream:{}, fetched:true, stash:[], reflog:[],
           merging:null };  // {from, theirSha} while a merge is unresolved
   }
   reset();
@@ -1427,6 +1450,13 @@ function createGit(opts){
 
   /* ---------- commands ---------- */
   function exec(raw){
+    var r=execInner(raw);
+    var t=tip();
+    var last=S.reflog.length ? S.reflog[S.reflog.length-1].sha : null;
+    if(t && t!==last) S.reflog.push({sha:t, action:String(raw).trim()});
+    return r;
+  }
+  function execInner(raw){
     buf=[]; var moved=null;
     var c=String(raw||'').trim().replace(/\s+/g,' ');
     if(!c) return {ok:false, lines:[], moved:null};
@@ -1725,7 +1755,7 @@ function createGit(opts){
         w('(Read the error — git just handed you the exact command.)','d');
         blank(); return {ok:false, lines:buf, moved:null};
       }
-      if(behind()){
+      if(behind() && !/--force/.test(c)){
         w('To '+URL);
         w(' ! [rejected]        '+S.HEAD+' -> '+S.HEAD+' (fetch first)','r');
         w("error: failed to push some refs to '"+URL+"'",'r');
@@ -1745,6 +1775,161 @@ function createGit(opts){
       w('   3f2a1b0..'+tip()+'  '+S.HEAD+' -> '+S.HEAD);
       if(/-u|--set-upstream/.test(c)) w("branch '"+S.HEAD+"' set up to track 'origin/"+S.HEAD+"'.");
       blank(); return {ok:true, lines:buf, moved:moved};
+    }
+
+    /* ---- resolving a commit-ish ---- */
+    function resolve(ref){
+      if(!ref) return null;
+      if(ref==='HEAD') return tip();
+      var tilde=ref.match(/^HEAD~(\d+)$/);
+      if(tilde){
+        var s2=tip(), n=parseInt(tilde[1],10);
+        while(n-- > 0 && s2){ var cc=S.commits[s2]; s2=cc?cc.parents[0]:null; }
+        return s2||null;
+      }
+      if(S.refs[ref]!==undefined) return S.refs[ref];
+      if(S.commits[ref]) return ref;
+      var hit=null;
+      Object.keys(S.commits).forEach(function(k){ if(k.indexOf(ref)===0) hit=k; });
+      return hit;
+    }
+
+    /* ---- stash ---- */
+    if(c==='git stash'||c==='git stash push'){
+      if(!isMod() && !isStaged()){ w('No local changes to save'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      S.stash.push({wd:S.wd, idx:S.idx});
+      S.wd=headVer()||0; S.idx=null;
+      w('Saved working directory and index state WIP on '+S.HEAD);
+      w('(your changes are in the drawer. The file is back to your last commit.)','d');
+      blank(); return {ok:true, lines:buf, moved:'stash'};
+    }
+    if(c==='git stash pop'||c==='git stash apply'){
+      if(!S.stash.length){ w('No stash entries found.','r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      var st=(c==='git stash pop') ? S.stash.pop() : S.stash[S.stash.length-1];
+      S.wd=st.wd; S.idx=st.idx;
+      w('(taken back out of the drawer — your changes are in the file again)','d');
+      blank(); return {ok:true, lines:buf, moved:'stash'};
+    }
+    if(c==='git stash list'){
+      if(!S.stash.length){ w('(the drawer is empty)','d'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      S.stash.forEach(function(_,i){ w('stash@{'+i+'}: WIP on '+S.HEAD); });
+      blank(); return {ok:true, lines:buf, moved:null};
+    }
+
+    /* ---- reset ---- */
+    var rs=c.match(/^git reset(?: (--soft|--mixed|--hard))?(?: ([\w~^]+))?$/);
+    if(rs){
+      var mode=rs[1]||'--mixed', target=rs[2]||'HEAD';
+      var to=resolve(target);
+      if(!to){ w("fatal: ambiguous argument '"+target+"': unknown revision",'r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      var oldVer=headVer();
+      S.refs[S.HEAD]=to;
+      if(mode==='--soft'){
+        S.idx=oldVer;
+        w('(HEAD moved back. Your changes are still staged, ready to re-commit.)','d');
+      } else if(mode==='--hard'){
+        S.idx=null; S.wd=verOf(to)||0;
+        w('HEAD is now at '+to+' '+(S.commits[to]?S.commits[to].msg:''));
+        w('(--hard also threw away your uncommitted changes. Those are gone for good.','d');
+        w(' The commits are not: try git reflog.)','d');
+      } else {
+        S.idx=null;
+        w('(HEAD moved back. Your changes are in the folder, unstaged.)','d');
+      }
+      blank(); return {ok:true, lines:buf, moved:'reset'};
+    }
+
+    /* ---- reflog ---- */
+    if(/^git reflog/.test(c)){
+      if(!S.reflog.length){ w('(nothing yet — the reflog fills up as you work)','d'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      for(var ri=S.reflog.length-1, n2=0; ri>=0; ri--, n2++){
+        var e2=S.reflog[ri];
+        w(e2.sha+' HEAD@{'+n2+'}: '+e2.action, n2===0?'u':'');
+      }
+      w('(every position HEAD has been in. Nothing committed is ever really lost —','d');
+      w(' git reset --hard <that id> takes you back.)','d');
+      blank(); return {ok:true, lines:buf, moved:null};
+    }
+
+    /* ---- revert ---- */
+    var rv=c.match(/^git revert (?:--no-edit )?([\w~^]+)$/);
+    if(rv){
+      var bad=resolve(rv[1]);
+      if(!bad){ w("fatal: bad revision '"+rv[1]+"'",'r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      if(dirty()){ w('error: your local changes would be overwritten by revert.','r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      var bc=S.commits[bad], back=verOf(bc.parents[0]);
+      var rsha=makeCommit('Revert "'+bc.msg+'"',[tip()],back===null?0:back,laneFor(S.HEAD));
+      S.refs[S.HEAD]=rsha; S.wd=verOf(rsha);
+      w('['+S.HEAD+' '+rsha+'] Revert "'+bc.msg+'"');
+      w('(revert does not delete anything — it adds a NEW commit that undoes the old','d');
+      w(' one. That is why it is safe on work you have already pushed.)','d');
+      blank(); return {ok:true, lines:buf, moved:'commit'};
+    }
+
+    /* ---- amend ---- */
+    if(/^git commit --amend/.test(c)){
+      if(!tip()){ w('fatal: You have nothing to amend.','r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      var amm=c.match(/--amend(?: --no-edit)?(?: -m ["'](.+)["'])?/);
+      var old=S.commits[tip()];
+      var newMsg=(amm&&amm[1])?amm[1]:old.msg;
+      var newVer=isStaged()?S.idx:old.ver;
+      var ash=makeCommit(newMsg,old.parents.slice(),newVer,old.lane);
+      S.refs[S.HEAD]=ash; S.idx=null;
+      w('['+S.HEAD+' '+ash+'] '+newMsg);
+      w('(note the id changed — amend does not edit a commit, it replaces it.','d');
+      w(' Fine before you push; needs a force push after.)','d');
+      blank(); return {ok:true, lines:buf, moved:'commit'};
+    }
+
+    /* ---- rebase ---- */
+    if(c==='git rebase --abort'){
+      w('fatal: No rebase in progress?','r'); blank();
+      return {ok:false, lines:buf, moved:null};
+    }
+    var rb=c.match(/^git rebase ([\w./][\w./-]*)$/);
+    if(rb){
+      var onto=S.refs[rb[1]]!==undefined ? S.refs[rb[1]]
+             : (rb[1].indexOf('origin/')===0 ? S.remoteRefs[rb[1].slice(7)] : undefined);
+      if(onto===undefined){ w("fatal: invalid upstream '"+rb[1]+"'",'r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      if(dirty()){
+        w('error: cannot rebase: You have unstaged changes.','r'); blank();
+        return {ok:false, lines:buf, moved:null};
+      }
+      var mineTip=tip();
+      if(mineTip && (mineTip===onto || isAncestor(onto,mineTip))){
+        w('Current branch '+S.HEAD+' is up to date.'); blank();
+        return {ok:true, lines:buf, moved:null};
+      }
+      if(!mineTip || isAncestor(mineTip,onto)){
+        S.refs[S.HEAD]=onto; S.wd=verOf(onto)||0;
+        w('Successfully rebased and updated refs/heads/'+S.HEAD+'.');
+        w('(nothing of your own to replay, so this was just a fast-forward)','d');
+        blank(); return {ok:true, lines:buf, moved:'rebase'};
+      }
+      var ontoReach=reach(onto);
+      var replay=S.order.filter(function(s){ return reach(mineTip)[s] && !ontoReach[s]; });
+      var parent=onto, pairs=[];
+      replay.forEach(function(oldSha){
+        var oc=S.commits[oldSha];
+        var ns=makeCommit(oc.msg,[parent],oc.ver,laneFor(S.HEAD));
+        pairs.push([oldSha,ns]); parent=ns;
+      });
+      S.refs[S.HEAD]=parent; S.wd=verOf(parent);
+      w('Successfully rebased and updated refs/heads/'+S.HEAD+'.');
+      pairs.forEach(function(p){ w('  '+p[0]+' became '+p[1]+'  '+S.commits[p[1]].msg,'u'); });
+      w('(look at those ids. Rebase did not MOVE your commits — it made brand new','d');
+      w(' ones with the same changes and abandoned the originals. That is why the','d');
+      w(' history is a straight line, and why a push now has to be forced.)','d');
+      blank(); return {ok:true, lines:buf, moved:'rebase'};
     }
 
     if(c.indexOf('git ')!==0){
@@ -1786,7 +1971,7 @@ function createGit(opts){
       var c=S.commits[sha];
       var inL=!!allLocal[sha], inR=!!remoteR[sha];
       return {sha:sha, msg:c.msg, lane:c.lane, merge:c.parents.length>1,
-              kind: inL&&inR ? 'shared' : inR ? 'remote' : 'local',
+              kind: inL&&inR ? 'shared' : inR ? 'remote' : inL ? 'local' : 'orphan',
               onHead: !!localR[sha]};
     });
     var edges=[];
@@ -1895,7 +2080,8 @@ function createGit(opts){
     shared:{fill:'var(--steel-wash)',stroke:'var(--steel)',dash:''},
     local :{fill:'var(--amber-wash)',stroke:'var(--amber)',dash:''},
     remote:{fill:'none',              stroke:'var(--steel)',dash:'3 3'},
-    more  :{fill:'none',              stroke:'var(--rule)', dash:'2 3'}
+    more  :{fill:'none',              stroke:'var(--rule)', dash:'2 3'},
+    orphan:{fill:'none',              stroke:'var(--rule)', dash:'2 4'}
   };
   function svgEl(tag,cls){
     var e=document.createElementNS(SVGNS,tag);
@@ -2097,7 +2283,10 @@ function createGit(opts){
       ['git init','git status','git add notes.txt','git commit -m "message"','git log --oneline',
        'git diff','git diff --staged','git restore notes.txt','git restore --staged notes.txt',
        'git switch -c <name>','git switch <name>','git branch','git branch -d <name>',
-       'git merge <name>','git merge --abort',
+       'git merge <name>','git merge --abort','git rebase <name>',
+       'git stash','git stash pop','git stash list',
+       'git reset --soft|--mixed|--hard HEAD~1','git reflog','git revert <id>',
+       'git commit --amend -m "message"',
        'git remote add origin <url>','git push -u origin main','git push','git fetch','git pull',
        'clear','reset'].forEach(function(l){o('  '+esc(l),'d')});
       o(''); return;

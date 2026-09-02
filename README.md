@@ -24,6 +24,9 @@ the merge conflict.
   with uncommitted changes is refused exactly as Git refuses it.
 - **A live commit graph** beside it, showing `main`, `origin/main` and every branch as pointers
   into that DAG — so "ahead by 2", a rejected push, and a genuine fork stop being abstract.
+- **Rebase, and the whole undo family** — `rebase`, `stash`, `reset --soft/--mixed/--hard`,
+  `reflog`, `revert`, `commit --amend`. A rebase leaves the abandoned originals on the graph as
+  ghosts, and `reflog` really does recover what `reset --hard` threw away.
 - **A nine-task practical exam.** Graded on the repository's actual state, not on what was typed,
   so any correct route works and there is no way to pass by copying a string.
 - **A merge-vs-rebase visualiser** where the commit IDs visibly change on rebase — the detail
@@ -57,7 +60,7 @@ The sandbox is a pure state machine with no DOM access, so it can be tested dire
 node test.js
 ```
 
-62 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
+77 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
 and extracts the engine from between the `==GIT-ENGINE-START==` / `==GIT-ENGINE-END==`
 sentinels, which keeps the page a single self-contained file you can still open from disk.
 

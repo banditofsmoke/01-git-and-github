@@ -436,6 +436,147 @@ describe('deleting branches', () => {
   });
 });
 
+describe('rebase', () => {
+  /* feature branched off, then main moved on — the classic setup */
+  function diverged() {
+    const g = committed();
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "feature work"');
+    g.exec('git switch main');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "main work"');
+    g.exec('git switch feature');
+    return g;
+  }
+  it('replays your commits with BRAND NEW ids', () => {
+    const g = diverged();
+    const before = g.snapshot().lastSha;
+    const r = g.exec('git rebase main');
+    ok(r.ok);
+    const after = g.snapshot().lastSha;
+    ok(before !== after, 'the commit id changed — it is a new commit, not a moved one');
+    includes(r.lines, 'became');
+    includes(r.lines, 'abandoned the originals');
+  });
+  it('leaves the abandoned originals as orphans, not as your work', () => {
+    const g = diverged();
+    g.exec('git rebase main');
+    const orphans = g.snapshot().graph.nodes.filter(n => n.kind === 'orphan');
+    eq(orphans.length, 1, 'the replaced commit is now unreachable');
+  });
+  it('puts your work on top of main', () => {
+    const g = diverged();
+    g.exec('git rebase main');
+    g.exec('git switch main');
+    // main is now an ancestor of feature, so the merge is a clean fast-forward
+    includes(g.exec('git merge feature').lines, 'Fast-forward');
+  });
+  it('says up to date when there is nothing to replay onto', () => {
+    const g = committed();
+    g.exec('git switch -c feature');
+    includes(g.exec('git rebase main').lines, 'up to date');
+  });
+  it('refuses with unstaged changes', () => {
+    const g = diverged(); g.editFile();
+    const r = g.exec('git rebase main');
+    eq(r.ok, false); includes(r.lines, 'unstaged changes');
+  });
+  it('rejects a plain push afterwards, but accepts --force-with-lease', () => {
+    const g = committed();
+    g.exec('git remote add origin https://x.git');
+    g.exec('git push -u origin main');
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "work"');
+    g.exec('git switch main');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "main work"');
+    g.exec('git push');
+    g.exec('git switch feature');
+    g.exec('git push -u origin feature');
+    g.exec('git rebase main');
+    const bad = g.exec('git push');
+    eq(bad.ok, false, 'plain push refuses after a rebase');
+    ok(g.exec('git push --force-with-lease').ok, 'force-with-lease gets through');
+  });
+});
+
+describe('stash', () => {
+  it('refuses when there is nothing to stash', () => {
+    eq(committed().exec('git stash').ok, false);
+  });
+  it('hides your changes and gives them back', () => {
+    const g = committed();
+    g.editFile();
+    const dirtyVer = g.snapshot().wd;
+    ok(g.exec('git stash').ok);
+    eq(g.snapshot().modified, false, 'working tree is clean again');
+    g.exec('git stash pop');
+    eq(g.snapshot().wd, dirtyVer, 'changes came back');
+    eq(g.snapshot().modified, true, 'and are unstaged again');
+  });
+  it('is the answer to being unable to switch branches', () => {
+    const g = committed();
+    g.exec('git switch -c feature'); g.exec('git switch main');
+    g.editFile();
+    eq(g.exec('git switch feature').ok, false, 'blocked by the dirty tree');
+    g.exec('git stash');
+    ok(g.exec('git switch feature').ok, 'stashing unblocks it');
+  });
+});
+
+describe('reset, and getting it back', () => {
+  function twoCommits() {
+    const g = committed();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "second"');
+    return g;
+  }
+  it('--soft keeps the changes staged', () => {
+    const g = twoCommits();
+    g.exec('git reset --soft HEAD~1');
+    eq(g.snapshot().commits, 1, 'one commit undone');
+    eq(g.snapshot().staged, true, 'changes still in the basket');
+  });
+  it('--mixed drops them back into the folder', () => {
+    const g = twoCommits();
+    g.exec('git reset --mixed HEAD~1');
+    eq(g.snapshot().staged, false, 'not staged');
+    eq(g.snapshot().modified, true, 'but still in the file');
+  });
+  it('--hard destroys them', () => {
+    const g = twoCommits();
+    g.exec('git reset --hard HEAD~1');
+    eq(g.snapshot().commits, 1, 'commit undone');
+    eq(g.snapshot().modified, false, 'and the changes are gone');
+  });
+  it('reflog still holds what --hard threw away, so it can be recovered', () => {
+    const g = twoCommits();
+    const lost = g.snapshot().lastSha;
+    g.exec('git reset --hard HEAD~1');
+    ok(g.snapshot().lastSha !== lost, 'we really did lose it');
+    const log = g.exec('git reflog');
+    includes(log.lines, lost, 'the reflog still names it');
+    g.exec('git reset --hard ' + lost);
+    eq(g.snapshot().lastSha, lost, 'and it comes straight back');
+  });
+});
+
+describe('revert and amend', () => {
+  it('revert adds a commit rather than removing one', () => {
+    const g = committed();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "the bad one"');
+    const n = g.snapshot().commits;
+    const bad = g.snapshot().lastSha;
+    ok(g.exec('git revert ' + bad).ok);
+    eq(g.snapshot().commits, n + 1, 'history got longer, not shorter');
+    ok(g.snapshot().graph.nodes.some(x => x.msg.indexOf('Revert') === 0), 'a revert commit exists');
+  });
+  it('amend replaces the last commit with a new id', () => {
+    const g = committed();
+    const before = g.snapshot().lastSha;
+    ok(g.exec('git commit --amend -m "better message"').ok);
+    ok(g.snapshot().lastSha !== before, 'the id changed — it is a replacement');
+    ok(g.snapshot().graph.nodes.some(x => x.msg === 'better message'), 'new message stuck');
+  });
+});
+
 describe('the history graph', () => {
   const g2 = g => g.snapshot().graph;
 
