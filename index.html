@@ -267,6 +267,15 @@ section{padding:clamp(2.6rem,6vw,4rem) 0 0}
 .tin input:focus{outline:none}
 .tin input::placeholder{color:#5A6152}
 .btnrow{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.9rem}
+.nextbar{display:flex;gap:.85rem;align-items:center;flex-wrap:wrap;margin-top:1rem;
+  border:1.5px solid var(--amber);background:var(--amber-wash);padding:.65rem .8rem}
+.nextbar button{flex:none}
+.nexttxt{display:flex;flex-direction:column;gap:.1rem;min-width:0}
+.nexttxt span{font-family:var(--f-tag);font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;color:var(--ink-2)}
+.nexttxt code{font-family:var(--f-mono);font-size:.82rem;font-weight:600;color:var(--ink);
+  word-break:break-all}
+.hint{font-size:.83rem;color:var(--ink-3);margin:.45rem 0 0}
 
 /* graph */
 .graphwrap{overflow-x:auto}
@@ -444,15 +453,45 @@ img{max-width:100%}
         <input id="tinput" autocomplete="off" spellcheck="false"
           placeholder="try: git init   (or type: help)" aria-label="git command input"></div>
 
+      <div class="nextbar">
+        <button type="button" class="pri" id="b-next">Do the next thing ▶</button>
+        <div class="nexttxt">
+          <span id="nextLabel">Start the repository</span>
+          <code id="nextCmd">git init</code>
+        </div>
+      </div>
+      <p class="hint">Not sure what to type? Press that button as many times as you like — it always
+      runs the next sensible command and will walk you all the way to GitHub. Or ignore it and
+      type your own.</p>
+
       <div class="btnrow">
         <button type="button" class="pri" id="b-edit">Edit the file</button>
-        <button type="button" class="gh" data-run="git status">git status</button>
-        <button type="button" class="gh" data-run="git add notes.txt">git add notes.txt</button>
-        <button type="button" class="gh" data-run='git commit -m "My first commit"'>git commit -m "…"</button>
-        <button type="button" class="gh" data-run="git push">git push</button>
-        <button type="button" class="gh" data-run="git diff">git diff</button>
+        <button type="button" id="b-github">Someone edits on GitHub</button>
         <button type="button" id="b-reset">Reset</button>
       </div>
+      <div class="btnrow">
+        <button type="button" class="gh" data-run="git status">git status</button>
+        <button type="button" class="gh" data-run="git add notes.txt">git add notes.txt</button>
+        <button type="button" class="gh" data-run='git commit -m "My notes"'>git commit -m "…"</button>
+        <button type="button" class="gh" data-run="git diff">git diff</button>
+        <button type="button" class="gh" data-run="git diff --staged">git diff --staged</button>
+        <button type="button" class="gh" data-run="git remote add origin https://github.com/you/git-practice.git">git remote add origin …</button>
+        <button type="button" class="gh" data-run="git push -u origin main">git push -u origin main</button>
+        <button type="button" class="gh" data-run="git push">git push</button>
+        <button type="button" class="gh" data-run="git fetch">git fetch</button>
+        <button type="button" class="gh" data-run="git pull">git pull</button>
+        <button type="button" class="gh" data-run="git log --oneline">git log --oneline</button>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="tag">Box 4 is the only one on the internet</span>
+      <p>Boxes 1–3 all live on your own machine — you can do everything so far on a plane with
+      the wifi off. Only <code>git push</code> crosses into box 4, and only <code>git fetch</code>
+      and <code>git pull</code> come back the other way.</p>
+      <p style="margin-top:.4rem">Press <strong>Someone edits on GitHub</strong> above to see what
+      happens when box 4 gains a commit you don't have — it's the exact situation you'll create
+      on purpose in Step 07, and the reason <code>git push</code> sometimes refuses.</p>
     </div>
 
     <div class="warn">
@@ -1055,206 +1094,445 @@ document.addEventListener('click',function(e){
 });
 
 /* ===================== simulator ===================== */
+/* ==GIT-ENGINE-START==
+   Pure state machine. No DOM, no globals, no browser APIs.
+   test.js extracts everything between these sentinels and runs it in Node. */
+function createGit(opts){
+  opts = opts || {};
+  var FILE = 'notes.txt';
+  var URL  = 'https://github.com/you/git-practice.git';
+  var nextSha = opts.sha || function(){
+    var c='0123456789abcdef', s='';
+    for(var i=0;i<7;i++) s+=c[Math.floor(Math.random()*16)];
+    return s;
+  };
+
+  var S;
+  function reset(){
+    S = { init:false, exists:false, wd:0, v:0,
+          idx:null, head:null,
+          local:[],        // commits on local main
+          pushed:0,        // how many of local are also on origin
+          remoteOnly:[],   // commits on origin we do not have
+          fetched:false,   // do we know remoteOnly exists?
+          hasRemote:false, upstream:false };
+  }
+  reset();
+
+  /* ---- derived state ---- */
+  function tracked(){ return S.head!==null || S.idx!==null; }
+  function isStaged(){ return S.idx!==null && S.idx!==S.head; }
+  function isMod(){
+    if(!S.exists) return false;
+    var ref = S.idx!==null ? S.idx : S.head;
+    return ref!==null && S.wd!==ref;
+  }
+  function isUntracked(){ return S.exists && !tracked(); }
+  function ahead(){ return S.local.length - S.pushed; }
+  function behind(){ return S.remoteOnly.length; }
+
+  /* ---- output helpers ---- */
+  var buf;
+  function w(t,c){ buf.push({t:t, c:c||''}); }
+  function blank(){ w(''); }
+
+  /* ---- non-command actions ---- */
+  function editFile(){
+    if(!S.init) return {ok:false, lines:[{t:'(make the repository first — run git init)',c:'d'}]};
+    buf=[]; S.v++; S.wd=S.v;
+    if(!S.exists){ S.exists=true; w('(you create '+FILE+' in your editor — v'+S.v+')','d'); }
+    else w('(you edit '+FILE+' in your editor — now v'+S.v+')','d');
+    blank();
+    return {ok:true, lines:buf, moved:null};
+  }
+  function remoteCommit(){
+    buf=[];
+    if(!S.hasRemote){ w('(connect a remote first — run git remote add origin)','d'); blank();
+      return {ok:false, lines:buf}; }
+    S.remoteOnly.push({sha:nextSha(), msg:'Update '+FILE+' via the website'});
+    S.fetched=false;
+    w('(over on github.com you edit '+FILE+' and commit it there)','d');
+    w('(your laptop knows nothing about this yet — that is the point)','d');
+    blank();
+    return {ok:true, lines:buf, moved:null};
+  }
+
+  /* ---- git status ---- */
+  function status(){
+    if(!S.init){ w('fatal: not a git repository (or any of the parent directories): .git','r'); return; }
+    w('On branch main');
+    if(!S.local.length && !S.remoteOnly.length){ blank(); w('No commits yet'); }
+    else if(S.hasRemote && S.upstream){
+      var a=ahead(), b=S.fetched?behind():0;
+      if(a&&b){ w("Your branch and 'origin/main' have diverged,");
+                w('and have '+a+' and '+b+' different commits each, respectively.');
+                w('  (use "git pull" to merge the remote branch into yours)','d'); }
+      else if(a){ w("Your branch is ahead of 'origin/main' by "+a+" commit"+(a>1?'s':'')+'.');
+                  w('  (use "git push" to publish your local commits)','d'); }
+      else if(b){ w("Your branch is behind 'origin/main' by "+b+" commit"+(b>1?'s':'')+
+                    ', and can be fast-forwarded.');
+                  w('  (use "git pull" to update your local branch)','d'); }
+      else w("Your branch is up to date with 'origin/main'.");
+    }
+    var any=false;
+    if(isStaged()){ blank(); w('Changes to be committed:');
+      w('  (use "git restore --staged <file>..." to unstage)','d');
+      w('\t'+(S.head===null?'new file:   ':'modified:   ')+FILE,'g'); any=true; }
+    if(isMod()){ blank(); w('Changes not staged for commit:');
+      w('  (use "git add <file>..." to update what will be committed)','d');
+      w('  (use "git restore <file>..." to discard changes in working directory)','d');
+      w('\tmodified:   '+FILE,'r'); any=true; }
+    if(isUntracked()){ blank(); w('Untracked files:');
+      w('  (use "git add <file>..." to include in what will be committed)','d');
+      w('\t'+FILE,'r'); any=true; }
+    if(!any){ w(!S.exists && !S.local.length
+        ? 'nothing to commit (create/copy files and use "git add" to track)'
+        : 'nothing to commit, working tree clean'); }
+    else if(isUntracked() && !isStaged()){ blank();
+      w('nothing added to commit but untracked files present (use "git add" to track)'); }
+  }
+
+  /* ---- the command table ---- */
+  function exec(raw){
+    buf=[]; var moved=null;
+    var c=String(raw||'').trim().replace(/\s+/g,' ');
+    if(!c) return {ok:false, lines:[], moved:null};
+
+    if(c==='git init' || c==='git init -b main'){
+      if(S.init) w('Reinitialized existing Git repository in /git-practice/.git/');
+      else { S.init=true; w('Initialized empty Git repository in /git-practice/.git/');
+        w("(the branch is called 'main' because you set init.defaultBranch in Step 01)",'d'); }
+      blank(); return {ok:true, lines:buf, moved:null};
+    }
+    if(!S.init){
+      w('fatal: not a git repository (or any of the parent directories): .git','r');
+      blank(); return {ok:false, lines:buf, moved:null};
+    }
+
+    if(c==='git status' || c==='git status -s'){ status(); blank();
+      return {ok:true, lines:buf, moved:null}; }
+
+    if(new RegExp('^git add ('+FILE.replace('.','\\.')+'|\\.|-A|--all)$').test(c)){
+      if(!S.exists){ w("fatal: pathspec '"+FILE+"' did not match any files",'r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      if(!isMod() && !isUntracked()){ w('(nothing to add — box 1 already matches box 2)','d'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      S.idx=S.wd; moved='add';
+      w('(no output — git add is silent when it works. Run git status.)','d'); blank();
+      return {ok:true, lines:buf, moved:moved};
+    }
+
+    var m=c.match(/^git commit -m ["'](.+)["']$/);
+    var am=c.match(/^git commit -am ["'](.+)["']$/);
+    if(m || am || c==='git commit' || /^git commit -am /.test(c)){
+      var msg = m ? m[1] : am ? am[1] : 'Update '+FILE;
+      if(c==='git commit') w('(a text editor would open here. Use -m "message" to skip it.)','d');
+      if(/^git commit -am /.test(c)){
+        if(isUntracked()){
+          w('(-am only picks up files git already tracks — '+FILE+' is untracked)','d');
+          w('nothing added to commit but untracked files present (use "git add" to track)');
+          blank(); return {ok:false, lines:buf, moved:null};
+        }
+        if(isMod()) S.idx=S.wd;
+      }
+      if(!isStaged()){
+        w('On branch main');
+        if(isMod()||isUntracked()){
+          w(isUntracked()?'Untracked files:':'Changes not staged for commit:');
+          w('\t'+FILE,'r');
+          w('no changes added to commit (use "git add" and/or "git commit -a")');
+        } else w('nothing to commit, working tree clean');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      var root=S.local.length===0, sh=nextSha();
+      S.head=S.idx; S.idx=null; S.local.push({sha:sh, msg:msg}); moved='commit';
+      w('['+(root?'main (root-commit) ':'main ')+sh+'] '+msg);
+      w(' 1 file changed, 1 insertion(+)'+(root?'':', 1 deletion(-)'));
+      if(root) w(' create mode 100644 '+FILE);
+      blank(); return {ok:true, lines:buf, moved:moved};
+    }
+
+    if(/^git log/.test(c)){
+      if(!S.local.length){
+        w("fatal: your current branch 'main' does not have any commits yet",'r'); blank();
+        return {ok:false, lines:buf, moved:null};
+      }
+      for(var i=S.local.length-1;i>=0;i--){
+        var cm=S.local[i], hd=(i===S.local.length-1);
+        var ref = hd ? ' (HEAD -> main'+(S.pushed===S.local.length&&S.hasRemote?', origin/main':'')+')' : '';
+        w(cm.sha+ref+' '+cm.msg, hd?'u':'');
+      }
+      blank(); return {ok:true, lines:buf, moved:null};
+    }
+
+    if(c==='git diff'){
+      if(!isMod()){
+        if(isStaged()){
+          w('(nothing — you already staged it. This is THE classic confusion.','d');
+          w(' git diff compares box 1 vs box 2. Try: git diff --staged)','d');
+        } else w('(no unstaged changes)','d');
+        blank(); return {ok:true, lines:buf, moved:null};
+      }
+      w('diff --git a/'+FILE+' b/'+FILE); w('--- a/'+FILE); w('+++ b/'+FILE); w('@@ -1 +1 @@','b');
+      w('-My notes, version '+(S.idx!==null?S.idx:S.head),'r');
+      w('+My notes, version '+S.wd,'g');
+      blank(); return {ok:true, lines:buf, moved:null};
+    }
+    if(c==='git diff --staged' || c==='git diff --cached'){
+      if(!isStaged()){ w('(nothing staged, so nothing to compare against your last commit)','d');
+        blank(); return {ok:true, lines:buf, moved:null}; }
+      w('diff --git a/'+FILE+' b/'+FILE);
+      w(S.head===null?'new file mode 100644':'--- a/'+FILE); w('+++ b/'+FILE); w('@@ -0,0 +1 @@','b');
+      if(S.head!==null) w('-My notes, version '+S.head,'r');
+      w('+My notes, version '+S.idx,'g');
+      blank(); return {ok:true, lines:buf, moved:null};
+    }
+
+    if(c==='git restore '+FILE || c==='git restore .'){
+      if(!isMod()){ w('(nothing to restore)','d'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      S.wd = S.idx!==null ? S.idx : S.head;
+      w('(silent. Your unsaved edits are gone — reverted to '+
+        (S.idx!==null?'what you staged':'your last commit')+'.)','d');
+      blank(); return {ok:true, lines:buf, moved:'restore'};
+    }
+    if(c==='git restore --staged '+FILE || c==='git restore --staged .'){
+      if(!isStaged()){ w('(nothing staged to unstage)','d'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      S.idx=null;
+      w('(silent. Taken out of the basket — your edits are still in the file.)','d');
+      blank(); return {ok:true, lines:buf, moved:'unstage'};
+    }
+
+    if(/^git remote add origin/.test(c)){
+      if(S.hasRemote){ w('error: remote origin already exists.','r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      S.hasRemote=true;
+      w('(silent. origin is now a nickname for that URL — nothing was sent.)','d');
+      blank(); return {ok:true, lines:buf, moved:'remote'};
+    }
+    if(c==='git remote -v'){
+      if(!S.hasRemote){ w('(no remotes yet)','d'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      w('origin\t'+URL+' (fetch)'); w('origin\t'+URL+' (push)');
+      blank(); return {ok:true, lines:buf, moved:null};
+    }
+
+    if(/^git fetch/.test(c)){
+      if(!S.hasRemote){ w("fatal: 'origin' does not appear to be a git repository",'r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      if(!S.remoteOnly.length){ w('(already up to date — nothing new on origin)','d'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      S.fetched=true;
+      w('From '+URL.replace('https://github.com/','github.com:').replace('.git',''));
+      w('   3f2a1b0..'+S.remoteOnly[S.remoteOnly.length-1].sha+'  main       -> origin/main');
+      w('(downloaded, and changed nothing in your folder. fetch is always safe.)','d');
+      blank(); return {ok:true, lines:buf, moved:'fetch'};
+    }
+
+    if(/^git pull/.test(c)){
+      if(!S.hasRemote){ w("fatal: 'origin' does not appear to be a git repository",'r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
+      if(!S.remoteOnly.length){ w('Already up to date.'); blank();
+        return {ok:true, lines:buf, moved:null}; }
+      var a2=ahead();
+      S.fetched=true;
+      if(a2===0){
+        // fast-forward
+        for(var k=0;k<S.remoteOnly.length;k++) S.local.push(S.remoteOnly[k]);
+        S.pushed=S.local.length; S.remoteOnly=[];
+        w('Updating 3f2a1b0..'+S.local[S.local.length-1].sha);
+        w('Fast-forward');
+        w(' '+FILE+' | 1 +');
+        w('(fast-forward: you had nothing of your own, so git just moved you up)','d');
+      } else {
+        // origin already holds everything it had, plus the commits we just took from it;
+        // only our own commits and the new merge commit are unpushed.
+        var onOrigin = S.pushed + S.remoteOnly.length;
+        for(var k2=0;k2<S.remoteOnly.length;k2++) S.local.push(S.remoteOnly[k2]);
+        var msh=nextSha();
+        S.local.push({sha:msh, msg:"Merge branch 'main' of "+URL});
+        S.remoteOnly=[]; S.pushed=onOrigin;
+        w('Merge made by the \'ort\' strategy.');
+        w(' '+FILE+' | 1 +');
+        w('(both sides had commits, so git made a merge commit. In real life the','d');
+        w(' same line changing on both sides is what causes a conflict — Step 07.)','d');
+      }
+      blank(); return {ok:true, lines:buf, moved:'pull'};
+    }
+
+    if(/^git push/.test(c)){
+      if(!S.hasRemote){
+        w("fatal: 'origin' does not appear to be a git repository",'r');
+        w('fatal: Could not read from remote repository.','r');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      if(!S.upstream && c==='git push'){
+        w('fatal: The current branch main has no upstream branch.','r');
+        w('To push the current branch and set the remote-tracking branch, use'); blank();
+        w('    git push --set-upstream origin main','u'); blank();
+        w('(Read the error — git just handed you the exact command.)','d');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      if(S.remoteOnly.length){
+        w('To '+URL);
+        w(' ! [rejected]        main -> main (fetch first)','r');
+        w("error: failed to push some refs to '"+URL+"'",'r');
+        w('hint: Updates were rejected because the remote contains work that you do','d');
+        w('hint: not have locally. Integrate the remote changes (e.g. "git pull")','d');
+        w('(git is protecting you — pushing now would erase what is on github.)','d');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      if(/-u|--set-upstream/.test(c)) S.upstream=true;
+      if(!S.local.length || S.pushed===S.local.length){
+        w('Everything up-to-date'); blank();
+        return {ok:true, lines:buf, moved:null};
+      }
+      S.pushed=S.local.length; moved='push';
+      w('Enumerating objects: 3, done.','d');
+      w('To '+URL);
+      w('   3f2a1b0..'+S.local[S.local.length-1].sha+'  main -> main');
+      if(/-u|--set-upstream/.test(c)) w("branch 'main' set up to track 'origin/main'.");
+      blank(); return {ok:true, lines:buf, moved:moved};
+    }
+
+    if(c.indexOf('git ')!==0){
+      w("'"+c.split(' ')[0]+"' isn't a git command. This sandbox only speaks git — type help.",'r');
+      blank(); return {ok:false, lines:buf, moved:null};
+    }
+    w("git: '"+c.slice(4).split(' ')[0]+"' isn't covered by this sandbox. Type help.",'r');
+    blank(); return {ok:false, lines:buf, moved:null};
+  }
+
+  /* ---- what should they do next? ---- */
+  function suggest(){
+    if(!S.init)          return {cmd:'git init',                    label:'Start the repository'};
+    if(!S.exists)        return {cmd:'@edit',                       label:'Create '+FILE};
+    if(isMod()||isUntracked()) return {cmd:'git add '+FILE,         label:'Put it in the basket'};
+    if(isStaged())       return {cmd:'git commit -m "My notes"',    label:'Save it as a commit'};
+    if(!S.hasRemote)     return {cmd:'git remote add origin '+URL,  label:'Connect it to GitHub'};
+    if(S.remoteOnly.length) return {cmd:'git pull',                 label:'Get GitHub’s changes first'};
+    if(!S.upstream)      return {cmd:'git push -u origin main',     label:'Upload it for the first time'};
+    if(ahead()>0)        return {cmd:'git push',                    label:'Upload your new commits'};
+    return {cmd:'@edit', label:'Change the file again'};
+  }
+
+  return {
+    exec:exec, editFile:editFile, remoteCommit:remoteCommit, suggest:suggest,
+    reset:function(){ reset(); },
+    snapshot:function(){
+      return {
+        init:S.init, exists:S.exists, wd:S.wd,
+        untracked:isUntracked(), modified:isMod(), staged:isStaged(),
+        stagedVersion:S.idx, headVersion:S.head,
+        commits:S.local.length, pushed:S.pushed,
+        remoteOnly:S.remoteOnly.length, fetched:S.fetched,
+        hasRemote:S.hasRemote, upstream:S.upstream,
+        ahead:ahead(), behind:behind(),
+        lastSha:S.local.length?S.local[S.local.length-1].sha:null
+      };
+    }
+  };
+}
+/* ==GIT-ENGINE-END== */
+
+/* ---- UI layer: everything below touches the DOM, nothing above does ---- */
 (function(){
   var term=document.getElementById('term'), input=document.getElementById('tinput');
-  var S;
-  function fresh(){S={init:false,exists:false,wd:0,idx:null,head:null,commits:[],
-    remote:0,hasRemote:false,upstream:false,v:0};}
-  fresh();
-  function sha(){var c='0123456789abcdef',s='';for(var i=0;i<7;i++)s+=c[Math.floor(Math.random()*16)];return s;}
-  function o(t,c){var d=document.createElement('div');d.className='ln'+(c?' '+c:'');
-    d.innerHTML=t;term.appendChild(d);term.scrollTop=term.scrollHeight;}
-  function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  function tracked(){return S.head!==null||S.idx!==null}
-  function isStaged(){return S.idx!==null&&S.idx!==S.head}
-  function isMod(){if(!S.exists)return false;var r=S.idx!==null?S.idx:S.head;return r!==null&&S.wd!==r;}
-  function isUn(){return S.exists&&!tracked()}
+  var git=createGit();
+
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function o(html,cls){
+    var d=document.createElement('div'); d.className='ln'+(cls?' '+cls:'');
+    d.innerHTML=html; term.appendChild(d); term.scrollTop=term.scrollHeight;
+  }
+  function emit(lines){ lines.forEach(function(l){ o(esc(l.t), l.c); }); }
   function tok(c,n,s){return '<div class="tok '+c+'"><span class="fn">'+n+'</span><span class="st">'+s+'</span></div>';}
   function emp(t){return '<div class="tok empty">'+t+'</div>';}
 
   function draw(){
-    document.getElementById('slot-wd').innerHTML = !S.exists?emp('no file yet')
-      : isUn()?tok('untracked','notes.txt','untracked')
-      : isMod()?tok('modified','notes.txt','modified · v'+S.wd)
-      : isStaged()?tok('match','notes.txt','matches staging · v'+S.wd)
+    var S=git.snapshot();
+    document.getElementById('slot-wd').innerHTML = !S.exists ? emp('no file yet')
+      : S.untracked ? tok('untracked','notes.txt','untracked')
+      : S.modified  ? tok('modified','notes.txt','modified · v'+S.wd)
+      : S.staged    ? tok('match','notes.txt','matches staging · v'+S.wd)
       : tok('committed','notes.txt','clean · v'+S.wd);
-    document.getElementById('slot-idx').innerHTML = isStaged()
-      ? tok('staged','notes.txt','staged · v'+S.idx) : emp(S.init?'nothing staged':'—');
-    document.getElementById('slot-repo').innerHTML = S.commits.length
-      ? tok('committed',S.commits.length+' commit'+(S.commits.length>1?'s':''),
-            'HEAD → '+S.commits[S.commits.length-1].sha)
+    document.getElementById('slot-idx').innerHTML = S.staged
+      ? tok('staged','notes.txt','staged · v'+S.stagedVersion) : emp(S.init?'nothing staged':'—');
+    document.getElementById('slot-repo').innerHTML = S.commits
+      ? tok('committed',S.commits+' commit'+(S.commits>1?'s':''),'HEAD → '+S.lastSha)
       : emp(S.init?'no commits yet':'not a repo');
-    document.getElementById('slot-rem').innerHTML = !S.hasRemote?emp('no remote')
-      : S.remote?tok('committed',S.remote+' commit'+(S.remote>1?'s':''),'origin/main')
+    document.getElementById('slot-rem').innerHTML = !S.hasRemote ? emp('no remote')
+      : S.remoteOnly ? tok('modified','origin/main',S.remoteOnly+' commit'+(S.remoteOnly>1?'s':'')+' you lack')
+      : S.pushed ? tok('committed',S.pushed+' commit'+(S.pushed>1?'s':''),'origin/main')
       : emp('nothing pushed');
-    document.getElementById('s-idx').classList.toggle('lit',isStaged());
-    document.getElementById('s-wd').classList.toggle('lit',isMod()||isUn());
+    document.getElementById('s-idx').classList.toggle('lit',S.staged);
+    document.getElementById('s-wd').classList.toggle('lit',S.modified||S.untracked);
+    document.getElementById('s-rem').classList.toggle('lit',S.remoteOnly>0);
     document.getElementById('b-edit').textContent=S.exists?'Edit the file':'Create notes.txt';
-  }
-  function flow(id){var el=document.getElementById(id);if(!el)return;
-    el.classList.add('flow');setTimeout(function(){el.classList.remove('flow')},750);}
 
-  function status(){
-    if(!S.init){o('fatal: not a git repository (or any of the parent directories): .git','r');return;}
-    o('On branch main');
-    if(!S.commits.length){o('');o('No commits yet');}
-    else if(S.hasRemote&&S.upstream){
-      var a=S.commits.length-S.remote;
-      if(a>0){o("Your branch is ahead of 'origin/main' by "+a+" commit"+(a>1?'s':'')+'.');
-              o('  (use "git push" to publish your local commits)','d');}
-      else o("Your branch is up to date with 'origin/main'.");
-    }
-    var any=false;
-    if(isStaged()){o('');o('Changes to be committed:');
-      o('  (use "git restore --staged &lt;file&gt;..." to unstage)','d');
-      o('\t'+(S.head===null?'new file:   ':'modified:   ')+'notes.txt','g');any=true;}
-    if(isMod()){o('');o('Changes not staged for commit:');
-      o('  (use "git add &lt;file&gt;..." to update what will be committed)','d');
-      o('  (use "git restore &lt;file&gt;..." to discard changes in working directory)','d');
-      o('\tmodified:   notes.txt','r');any=true;}
-    if(isUn()){o('');o('Untracked files:');
-      o('  (use "git add &lt;file&gt;..." to include in what will be committed)','d');
-      o('\tnotes.txt','r');any=true;}
-    if(!any){o(!S.exists&&!S.commits.length
-      ?'nothing to commit (create/copy files and use "git add" to track)'
-      :'nothing to commit, working tree clean');}
-    else if(isUn()&&!isStaged()){o('');
-      o('nothing added to commit but untracked files present (use "git add" to track)');}
-    o('');
+    var n=git.suggest(), btn=document.getElementById('b-next');
+    btn.setAttribute('data-cmd',n.cmd);
+    document.getElementById('nextLabel').textContent=n.label;
+    document.getElementById('nextCmd').textContent = n.cmd==='@edit' ? '(edit the file)' : n.cmd;
+  }
+  function flow(kind){
+    var id={add:'c-add',commit:'c-commit',push:'c-push',pull:'c-push'}[kind];
+    if(!id)return;
+    var el=document.getElementById(id); if(!el)return;
+    el.classList.add('flow'); setTimeout(function(){el.classList.remove('flow')},750);
   }
 
-  function run(raw){
-    var c=raw.trim().replace(/\s+/g,' '); if(!c)return;
-    o('<span class="g">$</span> <span class="u">'+e(raw.trim())+'</span>');
-    if(c==='help'){
-      o('This sandbox understands:','b');
-      ['git init','git status','git add notes.txt  |  git add .','git commit -m "message"',
-       'git log --oneline','git diff','git diff --staged','git restore notes.txt',
-       'git restore --staged notes.txt','git remote add origin &lt;url&gt;',
-       'git push -u origin main','git push','clear','reset'].forEach(function(l){o('  '+l,'d')});
-      o('');return;
-    }
-    if(c==='clear'){term.innerHTML='';return;}
-    if(c==='reset'){fresh();term.innerHTML='';boot();draw();return;}
-    if(c.indexOf('git ')!==0){
-      o("'"+e(c.split(' ')[0])+"' isn't a git command. This sandbox only speaks git — type <span class=\"b\">help</span>.",'r');
-      o('');return;}
-    if(c==='git init'||c==='git init -b main'){
-      if(S.init)o('Reinitialized existing Git repository in /git-practice/.git/');
-      else{S.init=true;o('Initialized empty Git repository in /git-practice/.git/');
-        o('<span class="d">(the branch is called \'main\' because you set init.defaultBranch in Step 01)</span>');}
-      o('');draw();return;}
-    if(!S.init){o('fatal: not a git repository (or any of the parent directories): .git','r');o('');return;}
-    if(c==='git status'||c==='git status -s'){status();return;}
-    if(/^git add (notes\.txt|\.|-A|--all)$/.test(c)){
-      if(!S.exists){o("fatal: pathspec 'notes.txt' did not match any files",'r');o('');return;}
-      if(!isMod()&&!isUn()){o('<span class="d">(nothing to add — box 1 already matches box 2)</span>');o('');return;}
-      S.idx=S.wd;flow('c-add');draw();
-      o('<span class="d">(no output — git add is silent when it works. Run git status.)</span>');o('');return;}
-    var m=c.match(/^git commit -m ["'](.+)["']$/);
-    if(m||c==='git commit'||/^git commit -am /.test(c)){
-      var msg=m?m[1]:'Update notes.txt';
-      if(c==='git commit'){o('<span class="d">(a text editor would open here. Use -m "message" to skip it.)</span>');}
-      if(/^git commit -am /.test(c)){
-        var m2=c.match(/^git commit -am ["'](.+)["']$/); if(m2)msg=m2[1];
-        if(isUn()){o('<span class="d">(-am only picks up files git already tracks — notes.txt is untracked)</span>');
-          o('nothing added to commit but untracked files present (use "git add" to track)');o('');return;}
-        if(isMod())S.idx=S.wd;}
-      if(!isStaged()){
-        o('On branch main');
-        if(isMod()||isUn()){o(isUn()?'Untracked files:':'Changes not staged for commit:');
-          o('\tnotes.txt','r');
-          o('no changes added to commit (use "git add" and/or "git commit -a")');}
-        else o('nothing to commit, working tree clean');
-        o('');return;}
-      var root=S.commits.length===0, sh=sha();
-      S.head=S.idx;S.idx=null;S.commits.push({sha:sh,msg:msg});
-      flow('c-commit');draw();
-      o('['+(root?'main (root-commit) ':'main ')+sh+'] '+e(msg));
-      o(' 1 file changed, 1 insertion(+)'+(root?'':', 1 deletion(-)'));
-      if(root)o(' create mode 100644 notes.txt');
-      o('');return;}
-    if(/^git log/.test(c)){
-      if(!S.commits.length){o("fatal: your current branch 'main' does not have any commits yet",'r');o('');return;}
-      for(var i=S.commits.length-1;i>=0;i--){
-        var cm=S.commits[i], hd=(i===S.commits.length-1);
-        o('<span class="u">'+cm.sha+'</span>'+(hd?' <span class="b">(HEAD -&gt; main'+
-          (S.remote===S.commits.length?', origin/main':'')+')</span>':'')+' '+e(cm.msg));}
-      o('');return;}
-    if(c==='git diff'){
-      if(!isMod()){
-        if(isStaged()){o('<span class="d">(nothing — you already staged it. This is THE classic confusion.</span>');
-          o('<span class="d"> git diff compares box 1 vs box 2. Try: git diff --staged)</span>');}
-        else o('<span class="d">(no unstaged changes)</span>');
-        o('');return;}
-      o('diff --git a/notes.txt b/notes.txt');o('--- a/notes.txt');o('+++ b/notes.txt');
-      o('@@ -1 +1 @@','b');
-      o('-My notes, version '+(S.idx!==null?S.idx:S.head),'r');
-      o('+My notes, version '+S.wd,'g');o('');return;}
-    if(c==='git diff --staged'||c==='git diff --cached'){
-      if(!isStaged()){o('<span class="d">(nothing staged, so nothing to compare against your last commit)</span>');o('');return;}
-      o('diff --git a/notes.txt b/notes.txt');
-      o(S.head===null?'new file mode 100644':'--- a/notes.txt');o('+++ b/notes.txt');o('@@ -0,0 +1 @@','b');
-      if(S.head!==null)o('-My notes, version '+S.head,'r');
-      o('+My notes, version '+S.idx,'g');o('');return;}
-    if(c==='git restore notes.txt'||c==='git restore .'){
-      if(!isMod()){o('<span class="d">(nothing to restore)</span>');o('');return;}
-      S.wd=S.idx!==null?S.idx:S.head;draw();
-      o('<span class="d">(silent. Your unsaved edits are gone — reverted to '+
-        (S.idx!==null?'what you staged':'your last commit')+'.)</span>');o('');return;}
-    if(c==='git restore --staged notes.txt'||c==='git restore --staged .'){
-      if(!isStaged()){o('<span class="d">(nothing staged to unstage)</span>');o('');return;}
-      S.idx=null;draw();
-      o('<span class="d">(silent. Taken out of the basket — your edits are still in the file.)</span>');
-      o('');return;}
-    if(/^git remote add origin /.test(c)){
-      if(S.hasRemote){o('error: remote origin already exists.','r');o('');return;}
-      S.hasRemote=true;draw();
-      o('<span class="d">(silent. origin is now a nickname for that URL — nothing was sent.)</span>');
-      o('');return;}
-    if(c==='git remote -v'){
-      if(!S.hasRemote){o('<span class="d">(no remotes yet)</span>');o('');return;}
-      o('origin\thttps://github.com/you/git-practice.git (fetch)');
-      o('origin\thttps://github.com/you/git-practice.git (push)');o('');return;}
-    if(/^git push/.test(c)){
-      if(!S.hasRemote){o("fatal: 'origin' does not appear to be a git repository",'r');
-        o('fatal: Could not read from remote repository.','r');o('');return;}
-      if(!S.upstream&&c==='git push'){
-        o('fatal: The current branch main has no upstream branch.','r');
-        o('To push the current branch and set the remote-tracking branch, use');o('');
-        o('    git push --set-upstream origin main','u');o('');
-        o('<span class="d">(Read the error — git just handed you the exact command.)</span>');
-        o('');return;}
-      if(/-u|--set-upstream/.test(c))S.upstream=true;
-      if(!S.commits.length||S.remote===S.commits.length){o('Everything up-to-date');o('');return;}
-      S.remote=S.commits.length;flow('c-push');draw();
-      o('Enumerating objects: 3, done.','d');
-      o('To https://github.com/you/git-practice.git');
-      o('   3f2a1b0..'+S.commits[S.commits.length-1].sha+'  main -&gt; main');
-      if(/-u|--set-upstream/.test(c))o("branch 'main' set up to track 'origin/main'.");
-      o('');return;}
-    o("git: '"+e(c.slice(4).split(' ')[0])+"' isn't covered by this sandbox. Type <span class=\"b\">help</span>.",'r');
-    o('');
-  }
   function boot(){
     o('<span class="d">A pretend repository. Nothing here touches your real computer.</span>');
-    o('<span class="d">Start with </span><span class="b">git init</span><span class="d">, then press "Create notes.txt".</span>');
+    o('<span class="d">Press <b>Do the next thing</b> if you are not sure, or type a command.</span>');
     o('');
   }
+  function run(raw){
+    var c=String(raw||'').trim();
+    if(!c) return;
+    if(c==='help'){
+      o('<span class="g">$</span> <span class="u">help</span>');
+      o('This sandbox understands:','b');
+      ['git init','git status','git add notes.txt','git commit -m "message"','git log --oneline',
+       'git diff','git diff --staged','git restore notes.txt','git restore --staged notes.txt',
+       'git remote add origin <url>','git push -u origin main','git push','git fetch','git pull',
+       'clear','reset'].forEach(function(l){o('  '+esc(l),'d')});
+      o(''); return;
+    }
+    if(c==='clear'){ term.innerHTML=''; return; }
+    if(c==='reset'){ git.reset(); term.innerHTML=''; boot(); draw(); return; }
+    o('<span class="g">$</span> <span class="u">'+esc(c)+'</span>');
+    var r=git.exec(c);
+    emit(r.lines); flow(r.moved); draw();
+  }
+
   document.getElementById('b-edit').onclick=function(){
-    if(!S.init){o('<span class="d">(make the repository first — run git init)</span>');o('');return;}
-    S.v++;S.wd=S.v;
-    if(!S.exists){S.exists=true;o('<span class="d">$ (you create notes.txt in your editor — v'+S.v+')</span>');}
-    else o('<span class="d">$ (you edit notes.txt in your editor — now v'+S.v+')</span>');
-    o('');draw();
+    var r=git.editFile();
+    if(r.lines.length&&r.ok) o('<span class="g">$</span> <span class="d">(editor)</span>');
+    emit(r.lines); draw();
   };
-  document.getElementById('b-reset').onclick=function(){run('reset')};
+  document.getElementById('b-github').onclick=function(){
+    var r=git.remoteCommit();
+    if(r.ok) o('<span class="g">$</span> <span class="d">(github.com)</span>');
+    emit(r.lines); draw();
+  };
+  document.getElementById('b-next').onclick=function(){
+    var cmd=this.getAttribute('data-cmd');
+    if(cmd==='@edit') document.getElementById('b-edit').click();
+    else run(cmd);
+  };
+  document.getElementById('b-reset').onclick=function(){ run('reset'); };
   Array.prototype.forEach.call(document.querySelectorAll('[data-run]'),function(b){
-    b.onclick=function(){run(b.getAttribute('data-run'))};});
+    b.onclick=function(){ run(b.getAttribute('data-run')); };
+  });
   input.addEventListener('keydown',function(ev){
-    if(ev.key==='Enter'){run(input.value);input.value='';}});
-  boot();draw();
+    if(ev.key==='Enter'){ run(input.value); input.value=''; }
+  });
+
+  boot(); draw();
 })();
+
 
 /* ===================== graph ===================== */
 (function(){

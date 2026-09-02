@@ -42,6 +42,24 @@ To serve it over HTTP instead:
 python -m http.server 8000
 ```
 
+## Tests
+
+The sandbox is a pure state machine with no DOM access, so it can be tested directly:
+
+```bash
+node test.js
+```
+
+35 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
+and extracts the engine from between the `==GIT-ENGINE-START==` / `==GIT-ENGINE-END==`
+sentinels, which keeps the page a single self-contained file you can still open from disk.
+
+They cover the four-box transitions, the `git diff`-shows-nothing-after-`add` case, push
+rejection when the remote is ahead, fast-forward vs merge pulls, and — the reason they exist —
+that the guided **Do the next thing** button can walk a user all the way to GitHub without
+typing. That last one is a regression test: it previously could not, because nothing offered
+`git remote add` or `git push -u`.
+
 ## Built with
 
 Nothing. Hand-written HTML, CSS and vanilla JavaScript in a single file. The only external
