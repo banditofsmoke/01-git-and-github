@@ -54,12 +54,17 @@ your chosen OS and your theme are kept in your own browser's `localStorage` and 
 machine. If your browser blocks site storage, the page says so and everything still works —
 you just don't get progress saved.
 
-## Also here
+## Teaching it to someone else
 
-[`LESSON-PLAN.md`](LESSON-PLAN.md) is a **teacher's run-of-show** for delivering this as a live
-two-person lesson — acts with minute budgets, exact commands, and a table of what goes wrong.
-It's the teacher-led variant the solo page grew out of. If you're learning on your own you don't
-need it; if you're teaching someone else, start there.
+Two guides, for two different situations. Both are current; neither replaces the other.
+
+| Guide | Use it when |
+|---|---|
+| [`LESSON-PLAN.md`](LESSON-PLAN.md) | The learner works through **the site** at their own pace and you coach. One-to-one, a group, or over a call. Mirrors the site's nine steps and adds timings, what to say, where people stall, and a checkpoint question for each. |
+| [`LESSON-PLAN-PAIRED.md`](LESSON-PLAN-PAIRED.md) | You want the **two-person lesson** — you and one learner sharing a repo, both pushing, conflicting with each other for real. Needs two machines and two GitHub accounts. |
+
+The short version of both: the site does the explaining, so the teacher's job is unsticking,
+checking understanding, and **not taking the keyboard.**
 
 ## Notes
 
@@ -68,3 +73,7 @@ the conflict markers, whose sides genuinely do swap between a merge and a rebase
 instructions were checked against [git-scm.com/install](https://git-scm.com/install/) rather
 than assumed; the old `git-scm.com/downloads` URL now redirects, and the macOS binary installer
 was discontinued in 2021.
+
+Icons (`favicon.svg`, `favicon.ico`, `apple-touch-icon.png`) are generated from
+[`icon-512.png`](icon-512.png) — a commit node branching to another, in the page's own amber
+and steel.
