@@ -142,7 +142,7 @@ describe('box 1 → box 2 → box 3', () => {
 describe('the classic git diff confusion', () => {
   it('git diff shows changes before staging', () => {
     const g = committed(); g.editFile();
-    includes(g.exec('git diff').lines, 'My notes, version');
+    includes(g.exec('git diff').lines, 'notes.txt, version');
   });
   it('git diff shows NOTHING after staging, and explains why', () => {
     const g = committed(); g.editFile(); g.exec('git add notes.txt');
@@ -152,7 +152,7 @@ describe('the classic git diff confusion', () => {
   });
   it('git diff --staged shows them instead', () => {
     const g = committed(); g.editFile(); g.exec('git add notes.txt');
-    includes(g.exec('git diff --staged').lines, 'My notes, version');
+    includes(g.exec('git diff --staged').lines, 'notes.txt, version');
   });
 });
 
@@ -257,11 +257,12 @@ describe('when GitHub is ahead of you', () => {
     eq(s.remoteOnly, 0, 'caught up'); eq(s.ahead, 0, 'nothing to push');
     eq(s.commits, 2, 'their commit is now local');
   });
-  it('git pull makes a merge commit when both sides moved', () => {
+  it('git pull merges cleanly when the two sides touched DIFFERENT files', () => {
     const g = pushed(); g.remoteCommit();
-    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    g.editFile('todo.txt'); g.exec('git add todo.txt'); g.exec('git commit -m "mine"');
     const r = g.exec('git pull');
     includes(r.lines, 'Merge made by');
+    includes(r.lines, 'DIFFERENT files');
     const s = g.snapshot();
     eq(s.remoteOnly, 0, 'caught up');
     ok(s.ahead > 0, 'merge leaves you ahead, so you still have to push');
@@ -271,7 +272,7 @@ describe('when GitHub is ahead of you', () => {
     // even though origin plainly still held commits.
     const g = pushed();          // origin has 1
     g.remoteCommit();            // origin has 2, we have 1
-    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    g.editFile('todo.txt'); g.exec('git add todo.txt'); g.exec('git commit -m "mine"');
     g.exec('git pull');
     const s = g.snapshot();
     eq(s.pushed, 2, 'origin still holds the 2 commits it had');
@@ -281,10 +282,102 @@ describe('when GitHub is ahead of you', () => {
 
   it('push succeeds again after pulling', () => {
     const g = pushed(); g.remoteCommit();
-    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    g.editFile('todo.txt'); g.exec('git add todo.txt'); g.exec('git commit -m "mine"');
     g.exec('git pull');
     ok(g.exec('git push').ok, 'push after pull');
     eq(g.snapshot().ahead, 0, 'ahead');
+  });
+});
+
+describe('more than one file — what staging is actually for', () => {
+  it('you can stage one file and leave another alone', () => {
+    const g = committed();
+    g.editFile('notes.txt'); g.editFile('todo.txt');
+    g.exec('git add todo.txt');
+    const s = g.snapshot();
+    eq(s.stagedList, ['todo.txt'], 'only todo is staged');
+    eq(s.modifiedList, ['notes.txt'], 'notes is still just modified');
+  });
+  it('so a commit takes only what you staged', () => {
+    const g = committed();
+    g.editFile('notes.txt'); g.editFile('todo.txt');
+    g.exec('git add todo.txt'); g.exec('git commit -m "just the todo"');
+    const s = g.snapshot();
+    ok(s.tree['todo.txt'] !== undefined, 'todo made it in');
+    eq(s.modifiedList, ['notes.txt'], 'the notes edit is still waiting');
+  });
+  it('git add . takes everything', () => {
+    const g = committed();
+    g.editFile('notes.txt'); g.editFile('todo.txt');
+    g.exec('git add .');
+    eq(g.snapshot().modifiedList.length, 0, 'nothing left unstaged');
+    eq(g.snapshot().stagedList.length, 2, 'both staged');
+  });
+  it('status reports each file in its own section', () => {
+    const g = committed();
+    g.editFile('notes.txt'); g.editFile('todo.txt'); g.exec('git add todo.txt');
+    const r = g.exec('git status');
+    includes(r.lines, 'Changes to be committed:');
+    includes(r.lines, 'Changes not staged for commit:');
+  });
+});
+
+describe('.gitignore', () => {
+  it('a secret shows up as untracked until you ignore it', () => {
+    const g = committed();
+    g.editFile('secrets.env');
+    eq(g.snapshot().untrackedList, ['secrets.env'], 'git is offering to commit your secret');
+    g.addIgnore();
+    eq(g.snapshot().untrackedList.indexOf('secrets.env'), -1, 'now invisible to git');
+  });
+  it('git add . skips ignored files', () => {
+    const g = committed();
+    g.editFile('secrets.env'); g.addIgnore();
+    g.exec('git add .');
+    eq(g.snapshot().stagedList.indexOf('secrets.env'), -1, 'secret not staged');
+    ok(g.snapshot().stagedList.indexOf('.gitignore') > -1, 'but .gitignore itself is');
+  });
+  it('naming an ignored file explicitly is refused, with the reason', () => {
+    const g = committed();
+    g.editFile('secrets.env'); g.addIgnore();
+    const r = g.exec('git add secrets.env');
+    eq(r.ok, false); includes(r.lines, 'ignored by one of your .gitignore files');
+  });
+  it('ignoring does NOT untrack something already committed — rm --cached does', () => {
+    const g = committed();
+    g.editFile('secrets.env');
+    g.exec('git add secrets.env'); g.exec('git commit -m "oops, committed a secret"');
+    ok(g.snapshot().tree['secrets.env'] !== undefined, 'the secret is in history');
+    g.addIgnore();
+    ok(g.snapshot().tree['secrets.env'] !== undefined, 'gitignore did not help — still tracked');
+    ok(g.exec('git rm --cached secrets.env').ok, 'rm --cached is the fix');
+    ok(g.snapshot().stagedList.indexOf('secrets.env') > -1, 'staged as a deletion');
+  });
+});
+
+describe('merging depends on WHICH files changed', () => {
+  function twoBranches(fileA, fileB) {
+    const g = committed();
+    g.exec('git switch -c feature');
+    g.editFile(fileA); g.exec('git add ' + fileA); g.exec('git commit -m "feature"');
+    g.exec('git switch main');
+    g.editFile(fileB); g.exec('git add ' + fileB); g.exec('git commit -m "main"');
+    return g;
+  }
+  it('different files merge cleanly, with no conflict at all', () => {
+    const g = twoBranches('todo.txt', 'notes.txt');
+    const r = g.exec('git merge feature');
+    ok(r.ok, 'merged without asking');
+    includes(r.lines, 'DIFFERENT files');
+    eq(g.snapshot().merging, false, 'no conflict state');
+    const t = g.snapshot().tree;
+    ok(t['todo.txt'] !== undefined && t['notes.txt'] !== undefined, 'both sides kept');
+  });
+  it('the SAME file is what actually conflicts', () => {
+    const g = twoBranches('notes.txt', 'notes.txt');
+    const r = g.exec('git merge feature');
+    eq(r.ok, false);
+    eq(g.snapshot().conflicts, ['notes.txt'], 'and it names the file');
   });
 });
 
@@ -614,7 +707,7 @@ describe('the history graph', () => {
   });
   it('pulling heals the fork', () => {
     const g = pushed(); g.remoteCommit();
-    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    g.editFile('todo.txt'); g.exec('git add todo.txt'); g.exec('git commit -m "mine"');
     g.exec('git pull');
     const s = g2(g);
     eq(s.diverged, false, 'no longer forked');
@@ -623,7 +716,7 @@ describe('the history graph', () => {
   });
   it('pushing after the pull leaves everything shared', () => {
     const g = pushed(); g.remoteCommit();
-    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    g.editFile('todo.txt'); g.exec('git add todo.txt'); g.exec('git commit -m "mine"');
     g.exec('git pull'); g.exec('git push');
     const s = g2(g);
     eq(s.localOnly.length, 0, 'localOnly');

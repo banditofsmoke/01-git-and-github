@@ -17,8 +17,13 @@ the merge conflict.
 
 ## What's in it
 
-- **A live sandbox.** Type `git init`, `add`, `commit`, `push`, `diff`, `restore` into a fake
-  terminal and watch a file move between the four places a change can live. Real Git output.
+- **A live sandbox with three files.** Type `git init`, `add`, `commit`, `push`, `diff`, `restore`
+  into a fake terminal and watch the files move between the four places a change can live. Real
+  Git output. Three files rather than one, because the staging area's whole justification is
+  committing *some* changes and not others — which one file can describe but never demonstrate.
+- **`.gitignore` that does something.** Create `secrets.env`, watch Git offer to commit it, add a
+  `.gitignore`, watch it vanish. Then find out that ignoring does nothing for a file you already
+  committed, and that `git rm --cached` is the fix.
 - **Branches in the sandbox** — `switch -c`, `merge`, `branch -d`. Commits form a real DAG, so
   ancestry decides fast-forward vs merge commit, `-d` refuses an unmerged branch, and switching
   with uncommitted changes is refused exactly as Git refuses it.
@@ -60,7 +65,7 @@ The sandbox is a pure state machine with no DOM access, so it can be tested dire
 node test.js
 ```
 
-77 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
+87 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
 and extracts the engine from between the `==GIT-ENGINE-START==` / `==GIT-ENGINE-END==`
 sentinels, which keeps the page a single self-contained file you can still open from disk.
 
