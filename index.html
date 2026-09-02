@@ -100,7 +100,7 @@ kbd{background:var(--panel-2);border:1px solid var(--rule);border-bottom-width:2
 /* ---------- topbar ---------- */
 html{scroll-behavior:smooth;scroll-padding-top:70px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-#shell{transition:padding-left .25s ease}
+/* not transitioned, for the same reason as #sidebar above */
 #topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:.6rem;
   padding:.5rem clamp(.7rem,3vw,1.2rem);background:var(--ground);
   border-bottom:1.5px solid var(--rule)}
@@ -127,12 +127,16 @@ html{scroll-behavior:smooth;scroll-padding-top:70px}
   font-variant-numeric:tabular-nums;flex:none}
 
 /* ---------- sidebar ---------- */
-#sidebar{position:fixed;top:0;left:0;bottom:0;width:264px;z-index:80;
+/* The drawer's position is declarative and NOT transitioned, deliberately.
+   A transition that starts but never finishes locks the property at its in-flight
+   value for good, and every later toggle just retargets an animation that never
+   advances — leaving the menu stuck open or stuck off-screen. Navigation has to
+   work every time, so it snaps. */
+#sidebar{position:fixed;top:0;left:-264px;bottom:0;width:264px;z-index:80;
   background:var(--panel);border-right:1.5px solid var(--rule);
   display:flex;flex-direction:column;
-  transform:translateX(-100%);transition:transform .25s ease;
   overscroll-behavior:contain}
-body.nav-open #sidebar{transform:none}
+body.nav-open #sidebar{left:0}
 @media (prefers-reduced-motion:reduce){#sidebar{transition:none}}
 .sb-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;
   padding:.75rem .9rem;border-bottom:1.5px solid var(--rule);flex:none}
@@ -151,13 +155,10 @@ body.nav-open #sidebar{transform:none}
 .sb-foot{flex:none;display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
   border-top:1.5px solid var(--rule)}
 .sb-foot .prog{flex:1;margin:0}
-#backdrop{position:fixed;inset:0;z-index:70;background:rgba(10,12,9,.55);
-  opacity:0;pointer-events:none;transition:opacity .25s}
-body.nav-open #backdrop{opacity:1;pointer-events:auto}
-@media(min-width:1100px){
-  body.nav-open #shell{padding-left:264px}
-  body.nav-open #backdrop{opacity:0;pointer-events:none}
-}
+/* Driven purely by the `hidden` attribute — no opacity fade. A frozen fade would
+   leave an invisible sheet over the page swallowing every click. */
+#backdrop{position:fixed;inset:0;z-index:70;background:rgba(10,12,9,.55)}
+@media(min-width:1100px){ body.nav-open #shell{padding-left:264px} }
 
 /* controls bar */
 .bar{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;justify-content:space-between;
@@ -1894,9 +1895,15 @@ function createGit(opts){
   function set(open){
     body.classList.toggle('nav-open',open);
     tog.setAttribute('aria-expanded',open?'true':'false');
-    back.hidden=!open;
+    // the dimming sheet is for the overlay case only; on a wide screen the drawer
+    // sits beside the content and must never block it
+    back.hidden = !open || wide();
     STORE.set('gfz-nav',open?'1':'0');
   }
+  // crossing the breakpoint changes whether the sheet belongs there
+  window.addEventListener('resize',function(){
+    back.hidden = !body.classList.contains('nav-open') || wide();
+  },{passive:true});
   window.closeNavIfNarrow=function(){ if(!wide()) set(false); };
 
   tog.onclick=function(){ set(!body.classList.contains('nav-open')); };
