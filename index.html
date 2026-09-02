@@ -801,7 +801,7 @@ img{max-width:100%}
   <!-- ===== PRACTICAL ===== -->
   <section id="exam">
     <div class="shead"><span class="snum">08</span><h2>The Practical</h2></div>
-    <p class="lede">Nine tasks. Nobody tells you the commands — you have to do it. This is a
+    <p class="lede">Eleven tasks. Nobody tells you the commands — you have to do it. This is a
     sandbox, so a wrong move costs you nothing: get it wrong as many times as you like. That is
     the entire point of practising here rather than on something that matters.</p>
 
@@ -1444,15 +1444,16 @@ function createGit(opts){
     blank();
     return {ok:true, lines:buf};
   }
-  function remoteCommit(){
+  function remoteCommit(file){
+    file = file || 'notes.txt';
     buf=[];
     if(!S.hasRemote){ w('(connect a remote first — run git remote add origin)','d'); blank();
       return {ok:false, lines:buf}; }
     var base=S.remoteRefs.main||null, t=copyTree(treeOf(base));
-    t['notes.txt']=(t['notes.txt']||0)+100;
-    var sha=makeCommit('Update notes.txt via the website',[base],t,0);
+    t[file]=(t[file]||0)+100;
+    var sha=makeCommit('Update '+file+' via the website',[base],t,0);
     S.remoteRefs.main=sha; S.fetched=false;
-    w('(over on github.com you edit notes.txt and commit it there)','d');
+    w('(over on github.com you edit '+file+' and commit it there)','d');
     w('(your laptop knows nothing about this yet — that is the point)','d');
     blank();
     return {ok:true, lines:buf};
@@ -2762,7 +2763,7 @@ function createGit(opts){
 (function(){
   var term=document.getElementById('xterm'), input=document.getElementById('xinput');
   if(!term) return;
-  var git=createGit(), idx=0, passed={}, fixTip=null, revealed={};
+  var git=createGit(), idx=0, passed={}, fixTip=null, lostSha=null, revealed={};
 
   function refSha(s,name){
     var r=s.graph.refs.filter(function(x){ return x.name===name; })[0];
@@ -2784,6 +2785,17 @@ function createGit(opts){
      b:'Save it as a commit whose message is exactly <code>first commit</code>.',
      h:'<code>git commit -m "first commit"</code> — the <code>-m</code> is what stops an editor opening.',
      ok:function(s){ return s.graph.nodes.some(function(n){ return n.msg==='first commit'; }); }},
+
+    {t:'Stage one file, not the other',
+     b:'Two files now have changes. Put <strong>only</strong> <code>todo.txt</code> in the basket — leave <code>notes.txt</code> out of it.',
+     h:'<code>git add todo.txt</code>. Naming the file is the point: <code>git add .</code> would sweep up both, and here that is wrong.',
+     setup:function(){ git.editFile('notes.txt'); git.editFile('todo.txt'); },
+     setupNote:'(notes.txt has been edited, and todo.txt is brand new — check git status)',
+     ok:function(s){
+       return s.stagedList.indexOf('todo.txt')>-1
+           && s.stagedList.indexOf('notes.txt')===-1
+           && (s.modifiedList.indexOf('notes.txt')>-1 || s.untrackedList.indexOf('notes.txt')>-1);
+     }},
 
     {t:'Get it onto GitHub',
      b:'Connect this repository to <code>https://github.com/you/git-practice.git</code> and upload your work. It has never been pushed, so the branch has no upstream yet.',
@@ -2821,10 +2833,26 @@ function createGit(opts){
      ok:function(s){ return s.branches.indexOf('fix-typo')===-1; }},
 
     {t:'Someone changed it on GitHub',
-     b:'While you were working, someone edited <code>notes.txt</code> on the website. GitHub now has a commit you do not. Get it onto your machine.',
+     b:'While you were working, someone added a <code>README.md</code> on the website. GitHub now has a commit you do not. Get it onto your machine.',
      h:'<code>git pull</code>. (Or <code>git fetch</code> then <code>git merge origin/main</code> — pull is those two in one.)',
-     setup:function(){ git.remoteCommit(); },
-     ok:function(s){ return s.hasRemote && s.behind===0 && !s.merging; }}
+     setup:function(){ git.remoteCommit('README.md'); },
+     setupNote:'(someone added a README.md on github.com — check git status)',
+     ok:function(s){ return s.hasRemote && s.behind===0 && !s.merging; }},
+
+    {t:'Get back a commit you "lost"',
+     b:'A <code>git reset --hard</code> has just thrown away your last commit. It is not gone. Find it and get back to it.',
+     h:'<code>git reflog</code> lists everywhere HEAD has been — your commit is still in there. Copy its id, then <code>git reset --hard &lt;that id&gt;</code>.',
+     setup:function(){
+       git.editFile('notes.txt'); git.exec('git add notes.txt');
+       git.exec('git commit -m "important work"');
+       lostSha=git.snapshot().lastSha;
+       git.exec('git reset --hard HEAD~1');
+     },
+     setupNote:'(a commit called "important work" has just been destroyed. Get it back.)',
+     ok:function(s){
+       if(!lostSha) return false;
+       return s.graph.nodes.some(function(n){ return n.sha===lostSha && n.onHead; });
+     }}
   ];
 
   document.getElementById('xtot').textContent=TASKS.length;
@@ -2854,8 +2882,7 @@ function createGit(opts){
     var t=TASKS[idx];
     o('');
     o('<span class="b">── Task '+(idx+1)+' of '+TASKS.length+' ── '+esc(t.t)+'</span>');
-    if(t.setup) t.setup();
-    if(t.setup) emit([{t:'(something changed on github.com — check git status)',c:'d'}]);
+    if(t.setup){ t.setup(); if(t.setupNote) emit([{t:t.setupNote,c:'d'}]); }
     paintTask();
   }
 
@@ -2876,8 +2903,11 @@ function createGit(opts){
       var n=0; for(var k in passed) if(passed[k]) n++;
       o('');
       o('<span class="g">── All '+TASKS.length+' tasks done. '+n+' of '+TASKS.length+' passed. ──</span>');
-      o('<span class="d">You have just done, unaided, the whole thing: init, staging, commits,</span>','d');
-      o('<span class="d">a remote, a branch, a merge, a cleanup, and a pull. That is the job.</span>','d');
+      o('<span class="d">Unaided, you have just done the whole thing: started a repository, staged</span>','d');
+      o('<span class="d">one file and deliberately not another, committed, pushed, branched, merged,</span>','d');
+      o('<span class="d">tidied up, pulled someone else\'s work — and brought back a commit that had</span>','d');
+      o('<span class="d">been destroyed. That is the job. Nothing beyond this is a different kind of</span>','d');
+      o('<span class="d">thing, only more of the same.</span>','d');
     }
   }
 
@@ -2909,7 +2939,7 @@ function createGit(opts){
     idx++; announce();
   };
   document.getElementById('x-reset').onclick=function(){
-    git.reset(); idx=0; passed={}; revealed={}; fixTip=null;
+    git.reset(); idx=0; passed={}; revealed={}; fixTip=null; lostSha=null;
     term.innerHTML=''; boot();
   };
   input.addEventListener('keydown',function(ev){
