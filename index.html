@@ -12,11 +12,11 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Git From Zero">
-<meta property="og:title" content="Git From Zero — a solo walkthrough">
+<meta property="og:title" content="Git From Zero: a solo walkthrough">
 <meta property="og:description" content="Never used Git? By the end of this page you'll have a real repository on GitHub, with branches, a pull request, and a merge conflict you fixed yourself.">
 <meta property="og:url" content="https://git-lesson.sletchersystems.com/">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Git From Zero — a solo walkthrough">
+<meta name="twitter:title" content="Git From Zero: a solo walkthrough">
 <meta name="twitter:description" content="Never used Git? By the end of this page you'll have a real repository on GitHub, with branches, a pull request, and a merge conflict you fixed yourself.">
 
 <link rel="icon" href="/favicon.ico" sizes="32x32">
@@ -130,7 +130,7 @@ html{scroll-behavior:smooth;scroll-padding-top:70px}
 /* The drawer's position is declarative and NOT transitioned, deliberately.
    A transition that starts but never finishes locks the property at its in-flight
    value for good, and every later toggle just retargets an animation that never
-   advances — leaving the menu stuck open or stuck off-screen. Navigation has to
+   advances: leaving the menu stuck open or stuck off-screen. Navigation has to
    work every time, so it snaps. */
 #sidebar{position:fixed;top:0;left:-264px;bottom:0;width:264px;z-index:80;
   background:var(--panel);border-right:1.5px solid var(--rule);
@@ -155,7 +155,7 @@ body.nav-open #sidebar{left:0}
 .sb-foot{flex:none;display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;
   border-top:1.5px solid var(--rule)}
 .sb-foot .prog{flex:1;margin:0}
-/* Driven purely by the `hidden` attribute — no opacity fade. A frozen fade would
+/* Driven purely by the `hidden` attribute: no opacity fade. A frozen fade would
    leave an invisible sheet over the page swallowing every click. */
 #backdrop{position:fixed;inset:0;z-index:70;background:rgba(10,12,9,.55)}
 @media(min-width:1100px){ body.nav-open #shell{padding-left:264px} }
@@ -479,7 +479,7 @@ img{max-width:100%}
     this page you will have a real repository on GitHub, built by you, with branches, a pull
     request and a merge conflict you caused on purpose and fixed.</p>
     <p class="sub" style="font-size:.95rem">Ten steps, at your own pace. Your progress is saved
-    in this browser — close the tab and come back.</p>
+    in this browser: close the tab and come back.</p>
   </div></div>
 </header>
 
@@ -517,7 +517,7 @@ img{max-width:100%}
   <!-- ===== ACTS ===== -->
   <section id="course">
     <div class="shead"><span class="snum">01</span><h2>The Walkthrough</h2></div>
-    <p class="lede">Do these in order. Every command is a copy button — but type them out at least
+    <p class="lede">Do these in order. Every command is a copy button, but type them out at least
     the first few times, because typing is how they stick. Tick each step as you finish it.</p>
     <div id="acts"></div>
     <div class="btnrow">
@@ -528,7 +528,7 @@ img{max-width:100%}
       <button type="button" id="clearAll">Reset everything</button>
     </div>
     <p style="font-size:.82rem;color:var(--ink-3);margin-top:.6rem">A progress code is a short
-    string you can paste into this page on another computer. There's no account and no server —
+    string you can paste into this page on another computer. There's no account and no server:
     nothing you do here leaves your browser.</p>
   </section>
 
@@ -536,7 +536,7 @@ img{max-width:100%}
   <section id="places">
     <div class="shead"><span class="snum">02</span><h2>The Four Places</h2></div>
     <p class="lede">This is the whole mental model. A change to a file lives in exactly one of four
-    places, and every Git command just moves it one step. Type commands below and watch it move —
+    places, and every Git command just moves it one step. Type commands below and watch it move:
     it's a simulation, so nothing here can break anything.</p>
 
     <div class="panel">
@@ -588,7 +588,7 @@ img{max-width:100%}
           <code id="nextCmd">git init</code>
         </div>
       </div>
-      <p class="hint">Not sure what to type? Press that button as many times as you like — it always
+      <p class="hint">Not sure what to type? Press that button as many times as you like: it always
       runs the next sensible command and will walk you all the way to GitHub. Or ignore it and
       type your own.</p>
 
@@ -628,11 +628,11 @@ img{max-width:100%}
 
     <div class="note">
       <span class="tag">Box 4 is the only one on the internet</span>
-      <p>Boxes 1–3 all live on your own machine — you can do everything so far on a plane with
+      <p>Boxes 1 to 3 all live on your own machine: you can do everything so far on a plane with
       the wifi off. Only <code>git push</code> crosses into box 4, and only <code>git fetch</code>
       and <code>git pull</code> come back the other way.</p>
       <p style="margin-top:.4rem">Press <strong>Someone edits on GitHub</strong> above to see what
-      happens when box 4 gains a commit you don't have — it's the exact situation you'll create
+      happens when box 4 gains a commit you don't have: it's the exact situation you'll create
       on purpose in Step 07, and the reason <code>git push</code> sometimes refuses.</p>
     </div>
 
@@ -652,7 +652,7 @@ img{max-width:100%}
 
     <div class="warn">
       <span class="tag">The thing that confuses everybody</span>
-      <p>Run <code>git add</code>, then <code>git diff</code> — <strong>nothing appears</strong>, and
+      <p>Run <code>git add</code>, then <code>git diff</code>: <strong>nothing appears</strong>, and
       you assume it broke. It didn't. Plain <code>git diff</code> compares box 1 against box 2, and
       after staging they're identical. The question you meant to ask is
       <code>git diff --staged</code>, which compares box 2 against box 3. Try both above.</p>
@@ -663,7 +663,7 @@ img{max-width:100%}
   <section id="graph">
     <div class="shead"><span class="snum">03</span><h2>Merge vs Rebase</h2></div>
     <p class="lede">Two ways to bring a branch back together with <code>main</code>. Press the
-    buttons and watch what happens to the commits — especially to their <em>names</em>.</p>
+    buttons and watch what happens to the commits, especially to their <em>names</em>.</p>
 
     <div class="panel">
       <div class="ptitle"><div><span class="tag" id="glabel">Starting point</span>
@@ -684,14 +684,14 @@ img{max-width:100%}
         <tr><td><strong>Does what</strong></td><td>Ties both lines together with one new merge commit</td><td>Copies your commits on top of the newest main</td></tr>
         <tr><td><strong>Your commit IDs</strong></td><td>Unchanged</td><td><strong>All new.</strong> Same changes, different commits</td></tr>
         <tr><td><strong>History shows</strong></td><td>What actually happened</td><td>A tidier story that isn't literally true</td></tr>
-        <tr><td><strong>Then push is</strong></td><td>Normal</td><td>Rejected — needs <code>--force-with-lease</code></td></tr>
+        <tr><td><strong>Then push is</strong></td><td>Normal</td><td>Rejected: needs <code>--force-with-lease</code></td></tr>
         <tr><td><strong>Safe on a shared branch?</strong></td><td>Yes</td><td><strong>No</strong></td></tr>
       </tbody>
     </table></div>
 
     <div class="tip">
       <span class="tag">Working solo? Here's the honest answer</span>
-      <p>While you're the only person on the repo, <strong>this choice barely matters</strong> — you
+      <p>While you're the only person on the repo, <strong>this choice barely matters</strong>: you
       can't disrupt anyone. Use <code>merge</code>; it's the safe default and it's what the buttons
       on GitHub do. Learn <code>rebase</code> now so the word isn't scary later, but don't agonise
       over it. The one rule that <em>will</em> matter the day you work with someone:
@@ -722,7 +722,7 @@ img{max-width:100%}
         is on the bottom. They're swapped.</p>
         <p style="margin-top:.4rem"><strong>How to tell which you're in:</strong> look at the bottom
         marker. A <em>branch name</em> means merge. A <em>commit ID and message</em> means rebase.
-        Or just run <code>git status</code> — it says so on the first line.</p>
+        Or just run <code>git status</code>: it says so on the first line.</p>
       </div>
 
       <h3 style="margin-top:1.3rem">Fixing one, start to finish</h3>
@@ -730,14 +730,14 @@ img{max-width:100%}
         <thead><tr><th style="width:36%">Step</th><th>What you do</th></tr></thead>
         <tbody>
           <tr><td><code>git status</code></td><td>See which files conflict and which operation you're in</td></tr>
-          <tr><td>Open the file</td><td><strong>Delete all three marker lines</strong> and leave the content you want. Keep one side, both, or write something new — Git has no opinion</td></tr>
+          <tr><td>Open the file</td><td><strong>Delete all three marker lines</strong> and leave the content you want. Keep one side, both, or write something new: Git has no opinion</td></tr>
           <tr><td><code>git add &lt;file&gt;</code></td><td>This is how you say "resolved". There is no separate resolve command</td></tr>
           <tr><td><code>git commit</code><br><span style="color:var(--ink-3);font-size:.85rem">or <code>git rebase --continue</code></span></td><td>Finish the operation</td></tr>
         </tbody>
       </table></div>
 
       <div class="note">
-        <span class="tag">Your escape hatch — learn it before you need it</span>
+        <span class="tag">Your escape hatch: learn it before you need it</span>
         <p><code>git merge --abort</code> and <code>git rebase --abort</code> put everything back
         exactly as it was, as if you never started. You can always back out.</p>
       </div>
@@ -756,21 +756,21 @@ img{max-width:100%}
         <tr><td><code>warning: LF will be replaced by CRLF</code></td><td>Windows vs Mac/Linux line endings</td><td><strong>Nothing. It's harmless.</strong> It is not an error</td></tr>
         <tr><td><code>fatal: not a git repository</code></td><td>You're in the wrong folder</td><td><code>cd</code> into your project folder and try again</td></tr>
         <tr><td><code>Please tell me who you are</code></td><td>You skipped the name/email setup</td><td>The two <code>git config --global</code> lines in Step 01</td></tr>
-        <tr><td><code>The current branch has no upstream branch</code></td><td>First push of a brand new branch</td><td><strong>Read the message</strong> — it prints the exact command. Run that</td></tr>
+        <tr><td><code>The current branch has no upstream branch</code></td><td>First push of a brand new branch</td><td><strong>Read the message</strong>: it prints the exact command. Run that</td></tr>
         <tr><td><code>Updates were rejected... remote contains work you do not have</code></td><td>GitHub has commits you don't (you edited on the website)</td><td><code>git pull</code>, fix any conflict, then push</td></tr>
         <tr><td><code>refusing to merge unrelated histories</code></td><td>You made the GitHub repo <em>with</em> a README, so it has its own history</td><td><code>git pull origin main --allow-unrelated-histories</code></td></tr>
-        <tr><td><code>failed to push some refs</code> after a rebase</td><td>Expected — the commit IDs changed</td><td><code>git push --force-with-lease</code></td></tr>
+        <tr><td><code>failed to push some refs</code> after a rebase</td><td>Expected: the commit IDs changed</td><td><code>git push --force-with-lease</code></td></tr>
         <tr><td>A text editor opened and you're stuck</td><td>Git wants a commit message</td><td>Type it, <strong>save</strong>, close the tab/window. In Vim: <kbd>Esc</kbd> then <code>:wq</code> then <kbd>Enter</kbd></td></tr>
         <tr><td><code>Support for password authentication was removed</code></td><td>Passwords stopped working in 2021</td><td>Let the browser sign-in window do it, or use a personal access token</td></tr>
         <tr><td><code>Permission denied</code> on push</td><td>Signed in as the wrong account</td><td>Check the repo is yours, and which account your credential manager saved</td></tr>
-        <tr><td>Everything is on fire</td><td>—</td><td><code>git merge --abort</code> / <code>git rebase --abort</code>, or see <code>git reflog</code> in Step 08</td></tr>
+        <tr><td>Everything is on fire</td><td>-</td><td><code>git merge --abort</code> / <code>git rebase --abort</code>, or see <code>git reflog</code> in Step 08</td></tr>
       </tbody>
     </table></div>
 
     <div class="note">
       <span class="tag">The fear, and the cure</span>
       <p>Beginners are scared of Git because they think they can permanently destroy their work.
-      Once a change is <strong>committed</strong>, it is very hard to lose — <code>git reflog</code>
+      Once a change is <strong>committed</strong>, it is very hard to lose: <code>git reflog</code>
       remembers roughly 90 days of everything you did, even things you "deleted".</p>
       <p style="margin-top:.4rem">One real exception: <code>git reset --hard</code> destroys changes
       you <em>hadn't committed</em>, and nothing brings those back. Which is the whole argument for
@@ -782,8 +782,8 @@ img{max-width:100%}
   <section id="ref">
     <div class="shead"><span class="snum">06</span><h2>Every Command</h2></div>
     <p class="lede">Everything on this page, plus a bit more. Filter by name or by what you're
-    trying to do — try typing "undo" or "branch".</p>
-    <input class="filter" id="filter" placeholder="filter — try: undo, branch, github, danger"
+    trying to do: try typing "undo" or "branch".</p>
+    <input class="filter" id="filter" placeholder="filter (try undo, branch, github, danger)"
       aria-label="Filter commands">
     <div class="cgrid" id="cgrid"></div>
     <p style="margin-top:.8rem;color:var(--ink-3);font-size:.84rem" id="ccount"></p>
@@ -793,7 +793,7 @@ img{max-width:100%}
   <section id="quiz">
     <div class="shead"><span class="snum">07</span><h2>Check Yourself</h2></div>
     <p class="lede">Seven questions on the things that actually catch people out. Getting one wrong
-    is the useful outcome — each answer explains itself.</p>
+    is the useful outcome: each answer explains itself.</p>
     <div id="quizbox"></div>
     <p style="margin-top:.8rem;font-family:var(--f-mono);font-size:.88rem" id="score"></p>
   </section>
@@ -801,7 +801,7 @@ img{max-width:100%}
   <!-- ===== PRACTICAL ===== -->
   <section id="exam">
     <div class="shead"><span class="snum">08</span><h2>The Practical</h2></div>
-    <p class="lede">Eleven tasks. Nobody tells you the commands — you have to do it. This is a
+    <p class="lede">Eleven tasks. Nobody tells you the commands: you have to do it. This is a
     sandbox, so a wrong move costs you nothing: get it wrong as many times as you like. That is
     the entire point of practising here rather than on something that matters.</p>
 
@@ -828,7 +828,7 @@ img{max-width:100%}
         <button type="button" id="x-skip">Skip this one</button>
         <button type="button" id="x-reset">Restart the test</button>
       </div>
-      <p class="hint">Stuck on the command itself? <a href="#ref">Every Command</a> has the lot —
+      <p class="hint">Stuck on the command itself? <a href="#ref">Every Command</a> has the lot, and
       looking it up is a legitimate way to work, not cheating.</p>
     </div>
   </section>
@@ -837,15 +837,15 @@ img{max-width:100%}
   <section id="player2">
     <div class="shead"><span class="snum">09</span><h2>Adding Player 2</h2></div>
     <p class="lede">Everything above works alone. The moment a second person joins, four new ideas
-    show up. This is a map, not a lesson — come back when you actually have someone to work with.</p>
+    show up. This is a map, not a lesson: come back when you actually have someone to work with.</p>
 
     <div class="tbl"><table>
       <thead><tr><th style="width:26%">Idea</th><th>What changes</th></tr></thead>
       <tbody>
-        <tr><td><strong>Collaborators</strong></td><td>Settings → Collaborators → Add people. They must <strong>accept the invite</strong> before they can push — this is the single most common ten-minute stall</td></tr>
+        <tr><td><strong>Collaborators</strong></td><td>Settings → Collaborators → Add people. They must <strong>accept the invite</strong> before they can push: this is the single most common ten-minute stall</td></tr>
         <tr><td><strong>Forks</strong></td><td>For people you <em>don't</em> want pushing to your repo. They copy it, work there, and send a pull request back. This is how you contribute to strangers' open-source projects</td></tr>
-        <tr><td><strong>Review</strong></td><td>Now your pull request has an audience. Someone clicks a line and comments. <strong>You cannot approve your own PR</strong> — that's the point of it</td></tr>
-        <tr><td><strong>Real conflicts</strong></td><td>Now they happen by accident instead of on purpose. Nothing new to learn — you already did this in Step 07 — but <code>git pull</code> before you start work becomes a habit rather than a nicety</td></tr>
+        <tr><td><strong>Review</strong></td><td>Now your pull request has an audience. Someone clicks a line and comments. <strong>You cannot approve your own PR</strong>: that's the point of it</td></tr>
+        <tr><td><strong>Real conflicts</strong></td><td>Now they happen by accident instead of on purpose. Nothing new to learn (you already did this in Step 07), but <code>git pull</code> before you start work becomes a habit rather than a nicety</td></tr>
       </tbody>
     </table></div>
 
@@ -854,16 +854,16 @@ img{max-width:100%}
       <p>Write commit messages as if a stranger will read them, because in six months
       <strong>you are that stranger</strong>. "Fix bug" tells you nothing. "Fix crash when the
       search box is empty" tells you everything. This is the single habit that separates people who
-      are comfortable in a codebase from people who aren't — and you can practise it entirely alone.</p>
+      are comfortable in a codebase from people who aren't, and you can practise it entirely alone.</p>
     </div>
   </section>
 
   <footer>
     <div style="max-width:68ch">
-      <p><strong>Git From Zero</strong> — a solo walkthrough. No account, no server, no tracking.
+      <p><strong>Git From Zero</strong>: a solo walkthrough. No account, no server, no tracking.
       Your progress and settings live in this browser only and are never sent anywhere.</p>
       <p style="margin-top:.5rem">Command output was captured from a real repository rather than
-      written from memory — including the conflict markers, whose sides really do swap between a
+      written from memory, including the conflict markers, whose sides really do swap between a
       merge and a rebase. Install instructions verified against
       <a href="https://git-scm.com/install/">git-scm.com/install</a> (Git 2.55.0).</p>
     </div>
@@ -956,24 +956,24 @@ var ACTS=[
       '</div>'+
       '<p style="margin-top:.5rem">You get a window with some text and a blinking cursor. That text is the <em>prompt</em>. It is telling you which folder you are currently standing in.</p>'},
    {b:'<p><strong>Find out where you are.</strong> Every command you ever type runs <em>in a folder</em>, and the number one beginner mistake is being in the wrong one.</p>'+
-      osCmd({win:'pwd',mac:'pwd',linux:'pwd'},'"Print working directory" — where am I right now?')},
+      osCmd({win:'pwd',mac:'pwd',linux:'pwd'},'"Print working directory": where am I right now?')},
    {b:'<p><strong>List what\'s in here.</strong></p>'+
       osCmd({win:'dir',mac:'ls',linux:'ls'})},
    {b:'<p><strong>Move around.</strong> <code>cd</code> means "change directory".</p>'+
       osCmd({win:'cd Desktop\ncd ..',mac:'cd Desktop\ncd ..',linux:'cd Desktop\ncd ..'},
         '<code>cd ..</code> goes <em>up</em> one level. That one is worth memorising.')+
-      '<div class="tip"><span class="tag">Two keys that save you</span><p><kbd>Tab</kbd> auto-completes a folder name — type a few letters and press it. <kbd>↑</kbd> brings back your last command. Almost nobody types full paths by hand.</p></div>'}]},
+      '<div class="tip"><span class="tag">Two keys that save you</span><p><kbd>Tab</kbd> auto-completes a folder name: type a few letters and press it. <kbd>↑</kbd> brings back your last command. Almost nobody types full paths by hand.</p></div>'}]},
 
  {n:'01',t:'Install Git and tell it who you are',m:'10 min',nav:'Install',
-  goal:'Get the <code>git</code> command working, then set your name and email — they get stamped on everything you save, permanently.',
+  goal:'Get the <code>git</code> command working, then set your name and email: they get stamped on everything you save, permanently.',
   steps:[
    {b:'<p><strong>Check whether you already have it.</strong> Loads of machines do.</p>'+
       cmd('git --version','If you get a version number, skip to the next step. If you get "not recognized" or "command not found", install it below.')},
    {b:'<p><strong>Install it.</strong></p>'+
       '<div class="osb">'+
-      '<div data-os="win"><p>Download the installer from <a href="https://git-scm.com/install/windows" target="_blank" rel="noopener">git-scm.com/install/windows</a> and run it. <strong>Click Next through every screen</strong> — the defaults are correct, and one of them installs the sign-in helper you\'ll need later.</p>'+
-      '<p style="margin-top:.4rem">Then <strong>close your terminal and open a new one.</strong> This is the step people miss — a terminal only learns about new programs when it starts.</p></div>'+
-      '<div data-os="mac">'+cmd('xcode-select --install','A dialog appears — click Install. This is the no-extra-software route; Git comes bundled with Apple\'s developer tools.')+
+      '<div data-os="win"><p>Download the installer from <a href="https://git-scm.com/install/windows" target="_blank" rel="noopener">git-scm.com/install/windows</a> and run it. <strong>Click Next through every screen</strong>: the defaults are correct, and one of them installs the sign-in helper you\'ll need later.</p>'+
+      '<p style="margin-top:.4rem">Then <strong>close your terminal and open a new one.</strong> This is the step people miss: a terminal only learns about new programs when it starts.</p></div>'+
+      '<div data-os="mac">'+cmd('xcode-select --install','A dialog appears: click Install. This is the no-extra-software route; Git comes bundled with Apple\'s developer tools.')+
       '<p style="margin-top:.5rem">Or, if you already use Homebrew:</p>'+cmd('brew install git')+'</div>'+
       '<div data-os="linux">'+cmd('# Debian, Ubuntu, Mint\nsudo apt update && sudo apt install git')+
       cmd('# Fedora, RHEL\nsudo dnf install git')+'</div>'+
@@ -992,7 +992,7 @@ var ACTS=[
       out('you should see your three settings','user.name=Your Name\nuser.email=you@example.com\ninit.defaultBranch=main')}]},
 
  {n:'02',t:'Make your first repository',m:'15 min',nav:'First repo',
-  goal:'Create a project, save your first version, and see the four places for real. <strong>No internet involved yet</strong> — Git works completely offline, and separating that from GitHub is the thing that makes it click.',
+  goal:'Create a project, save your first version, and see the four places for real. <strong>No internet involved yet</strong>: Git works completely offline, and separating that from GitHub is the thing that makes it click.',
   steps:[
    {b:'<p><strong>Make a folder and go into it.</strong></p>'+
       osCmd({win:'cd Desktop\nmkdir git-practice\ncd git-practice',
@@ -1001,24 +1001,24 @@ var ACTS=[
    {b:'<p><strong>Turn it into a repository.</strong></p>'+
       cmd('git init')+
       out('you should see','Initialized empty Git repository in .../git-practice/.git/')+
-      '<p style="margin-top:.5rem">That made one hidden folder called <code>.git</code>. <strong>That folder is the repository</strong> — all your history lives inside it. Delete it and this becomes an ordinary folder again. Nothing has been sent anywhere.</p>'},
+      '<p style="margin-top:.5rem">That made one hidden folder called <code>.git</code>. <strong>That folder is the repository</strong>: all your history lives inside it. Delete it and this becomes an ordinary folder again. Nothing has been sent anywhere.</p>'},
    {b:'<p><strong>Ask Git what it thinks.</strong> Get in the habit now: run this after every single command for the next hour.</p>'+
       cmd('git status')+
       out('you should see','On branch main\n\nNo commits yet\n\nnothing to commit (create/copy files and use "git add" to track)')+
       '<div class="tip"><span class="tag">Your most useful command</span><p><code>git status</code> tells you which of the four boxes your work is sitting in <em>and</em> suggests what to type next. If you learn to reach for it automatically, you can get yourself unstuck without help.</p></div>'},
-   {b:'<p><strong>Create a file.</strong> Any text editor is fine — Notepad, TextEdit, VS Code. Make a file called <code>notes.txt</code> in the folder, put a sentence in it, save it.</p>'+
+   {b:'<p><strong>Create a file.</strong> Any text editor is fine: Notepad, TextEdit, VS Code. Make a file called <code>notes.txt</code> in the folder, put a sentence in it, save it.</p>'+
       cmd('git status')+
       out('now it says','Untracked files:\n  (use "git add <file>..." to include in what will be committed)\n        notes.txt')+
       '<p style="margin-top:.5rem"><strong>Untracked</strong> means Git can see the file but is deliberately ignoring it. Git never touches a file until you say so.</p>'},
    {b:'<p><strong>Put it in the basket.</strong></p>'+
       cmd('git add notes.txt\ngit status')+
       out('it moves to','Changes to be committed:\n        new file:   notes.txt')+
-      '<p style="margin-top:.5rem"><code>git add</code> <strong>saves nothing.</strong> It moves the change into the staging area — a basket. The reason this step exists is so you can save <em>some</em> of your changes and not others.</p>'+
+      '<p style="margin-top:.5rem"><code>git add</code> <strong>saves nothing.</strong> It moves the change into the staging area: a basket. The reason this step exists is so you can save <em>some</em> of your changes and not others.</p>'+
       '<p style="margin-top:.4rem">Go play with the sandbox in <a href="#places">The Four Places</a> for two minutes. Watching the block move is worth more than reading about it.</p>'},
-   {b:'<p><strong>Save it properly.</strong> This is a commit — a permanent snapshot.</p>'+
+   {b:'<p><strong>Save it properly.</strong> This is a commit: a permanent snapshot.</p>'+
       cmd('git commit -m "Add my notes file"')+
       out('you should see','[main (root-commit) d191e37] Add my notes file\n 1 file changed, 1 insertion(+)')+
-      '<div class="warn"><span class="tag">Always use <code>-m</code></span><p>Without <code>-m "message"</code>, Git opens a text editor to ask for one — often Vim, which gives no hint how to get out. If that happens: press <kbd>Esc</kbd>, type <code>:wq</code>, press <kbd>Enter</kbd>.</p></div>'},
+      '<div class="warn"><span class="tag">Always use <code>-m</code></span><p>Without <code>-m "message"</code>, Git opens a text editor to ask for one: often Vim, which gives no hint how to get out. If that happens: press <kbd>Esc</kbd>, type <code>:wq</code>, press <kbd>Enter</kbd>.</p></div>'},
    {b:'<p><strong>Look at your history.</strong></p>'+
       cmd('git log --oneline')+
       out('you should see','d191e37 (HEAD -> main) Add my notes file')+
@@ -1027,7 +1027,7 @@ var ACTS=[
  {n:'03',t:'The everyday loop',m:'10 min',nav:'The loop',
   goal:'This is 90% of using Git for the rest of your life: change something, look at what changed, save it. Everything else is occasional.',
   steps:[
-   {b:'<p><strong>Change <code>notes.txt</code></strong> — edit the sentence, save the file. Then:</p>'+
+   {b:'<p><strong>Change <code>notes.txt</code></strong>: edit the sentence, save the file. Then:</p>'+
       cmd('git status\ngit diff')+
       '<p style="margin-top:.4rem"><code>git diff</code> shows the actual lines: <span style="color:var(--del)">red minus</span> is what was there, <span style="color:var(--add)">green plus</span> is what\'s there now.</p>'},
    {b:'<p><strong>Now stage it and run <code>git diff</code> again.</strong></p>'+
@@ -1042,20 +1042,20 @@ var ACTS=[
       '<div class="warn"><span class="tag">The one that actually loses work</span><p><code>git restore &lt;file&gt;</code> permanently discards edits you never committed. There is no undo for it. Everything <em>committed</em> is recoverable; everything uncommitted is not.</p></div>'},
    {b:'<p><strong>Tell Git what to ignore.</strong> Make a file called <code>.gitignore</code> (yes, starting with a dot) listing things that should never be saved:</p>'+
       '<div class="cmd"><pre>node_modules/\n.env\n.DS_Store\n*.log</pre><button type="button" class="cp" data-c="node_modules/&#10;.env&#10;.DS_Store&#10;*.log">copy</button></div>'+
-      '<div class="warn"><span class="tag">Never commit secrets</span><p>API keys, passwords and <code>.env</code> files must go in <code>.gitignore</code> <strong>before</strong> you commit them. Once a secret is committed and pushed, deleting it later does <em>not</em> remove it from history — anyone can still read it, and you have to treat that key as compromised and replace it.</p>'+
+      '<div class="warn"><span class="tag">Never commit secrets</span><p>API keys, passwords and <code>.env</code> files must go in <code>.gitignore</code> <strong>before</strong> you commit them. Once a secret is committed and pushed, deleting it later does <em>not</em> remove it from history: anyone can still read it, and you have to treat that key as compromised and replace it.</p>'+
       '<p style="margin-top:.4rem"><code>.gitignore</code> only affects files Git isn\'t tracking yet. For something already tracked, you need <code>git rm --cached &lt;file&gt;</code> as well.</p></div>'}]},
 
  {n:'04',t:'Put it on GitHub',m:'15 min',nav:'GitHub',
-  goal:'Get your local repository onto the internet, so it is backed up and shareable. Everything so far worked offline — this bolts a copy on top.',
+  goal:'Get your local repository onto the internet, so it is backed up and shareable. Everything so far worked offline: this bolts a copy on top.',
   steps:[
    {b:'<p><strong>Make a GitHub account</strong> at <a href="https://github.com" target="_blank" rel="noopener">github.com</a> if you haven\'t. Then turn on private emails: <strong>Settings → Emails → Keep my email address private</strong>, and put that <code>noreply</code> address into the <code>git config user.email</code> command from Step 01.</p>'},
    {b:'<p><strong>Create an empty repository.</strong> Click <strong>+</strong> → <strong>New repository</strong>. Name it <code>git-practice</code>. Public or private, your call.</p>'+
       '<div class="warn"><span class="tag">Do not tick any of the boxes</span><p>Leave <em>Add a README</em>, <em>.gitignore</em> and <em>licence</em> all <strong>unticked</strong>. Ticking any one makes GitHub create a commit, which gives you two unrelated histories and an error that is genuinely miserable to untangle on day one.</p></div>'},
-   {b:'<p><strong>Connect your folder to it.</strong> GitHub shows you these two lines — use yours, with your username:</p>'+
+   {b:'<p><strong>Connect your folder to it.</strong> GitHub shows you these two lines. Use yours, with your username:</p>'+
       cmd('git remote add origin https://github.com/YOUR-NAME/git-practice.git\ngit push -u origin main')+
       '<p style="margin-top:.5rem"><code>origin</code> is just a nickname for that URL. <code>-u</code> links your local <code>main</code> to the one on GitHub, which is why from now on you can type plain <code>git push</code>.</p>'},
    {b:'<p><strong>Sign in when it asks.</strong> A browser window will open by itself the first time.</p>'+
-      '<div class="note"><span class="tag">That popup is expected</span><p>It is not an error and you have not done anything wrong. Your computer is asking GitHub to confirm it\'s really you. <strong>Your GitHub password will not work in the terminal</strong> — that was removed in 2021, which is exactly why the browser window exists.</p></div>'},
+      '<div class="note"><span class="tag">That popup is expected</span><p>It is not an error and you have not done anything wrong. Your computer is asking GitHub to confirm it\'s really you. <strong>Your GitHub password will not work in the terminal</strong>: that was removed in 2021, which is exactly why the browser window exists.</p></div>'},
    {b:'<p><strong>Refresh the GitHub page.</strong> Your file is there, with your commit message and history. Now prove the round trip works:</p>'+
       cmd('# edit notes.txt again, then:\ngit add notes.txt\ngit commit -m "Try out pushing"\ngit push')+
       '<p style="margin-top:.4rem">Refresh GitHub. That is the full loop: <strong>edit → add → commit → push</strong>.</p>'}]},
@@ -1069,7 +1069,7 @@ var ACTS=[
       out('you should see','Switched to a new branch \'add-a-title\'')+
       '<p style="margin-top:.5rem">A branch is not a copy of your folder. It is a <strong>sticky note pointing at a commit</strong>. Making one is instant and free.</p>'+
       '<p style="margin-top:.4rem">You will see <code>git checkout -b</code> in older tutorials. Same thing. <code>switch</code> is the newer, clearer command.</p>'},
-   {b:'<p><strong>Do some work on it</strong> — edit <code>notes.txt</code>, then:</p>'+
+   {b:'<p><strong>Do some work on it.</strong> Edit <code>notes.txt</code>, then:</p>'+
       cmd('git add notes.txt\ngit commit -m "Add a title to the notes"')},
    {b:'<p><strong>Now look at the trick.</strong> Switch back and open the file in your editor:</p>'+
       cmd('git switch main')+
@@ -1078,35 +1078,35 @@ var ACTS=[
       '<p style="margin-top:.4rem">Nothing was lost. Git is rewriting the folder to match whichever branch you\'re standing on. This is the moment branches usually click.</p>'},
    {b:'<p><strong>Bring the work back into <code>main</code>.</strong></p>'+
       cmd('git switch main\ngit merge add-a-title\ngit log --oneline --graph --all')},
-   {b:'<p><strong>Tidy up.</strong> Delete the branch once it\'s merged — they\'re disposable.</p>'+
+   {b:'<p><strong>Tidy up.</strong> Delete the branch once it\'s merged: they\'re disposable.</p>'+
       cmd('git branch -d add-a-title\ngit push')+
       '<p style="margin-top:.4rem"><code>-d</code> is the safe delete: it refuses if the branch isn\'t merged yet. <code>-D</code> forces it.</p>'}]},
 
  {n:'06',t:'Issues and pull requests',m:'20 min',nav:'Pull requests',
-  goal:'Practise the workflow every software team on earth uses — on your own repo, with nobody watching.',
+  goal:'Practise the workflow every software team on earth uses: on your own repo, with nobody watching.',
   steps:[
    {b:'<div class="note"><span class="tag">Being straight with you</span><p>Plenty of solo developers commit straight to <code>main</code> and that is genuinely fine. You are doing this to learn the <em>motion</em>, so that joining a team later is not the first time you have ever seen it. It also gives you a written record of why you changed something.</p></div>'},
-   {b:'<p><strong>Write an issue.</strong> On your repo: <strong>Issues → New issue</strong>. An issue says what should be true when you\'re done — <em>not</em> how to do it.</p>'+
+   {b:'<p><strong>Write an issue.</strong> On your repo: <strong>Issues → New issue</strong>. An issue says what should be true when you\'re done, <em>not</em> how to do it.</p>'+
       '<div class="out"><span class="expect">for example</span><b>Title:</b> Add a summary line at the top of notes.txt\n\nThe file jumps straight into detail. It needs one line at the\ntop saying what the file is for.\n\n- [ ] One summary sentence at the top\n- [ ] Keep it under 100 characters</div>'+
-      '<p style="margin-top:.4rem">It gets a number — <strong>#1</strong>. That number ties the issue, your branch, your pull request and the merge together.</p>'},
+      '<p style="margin-top:.4rem">It gets a number: <strong>#1</strong>. That number ties the issue, your branch, your pull request and the merge together.</p>'},
    {b:'<p><strong>Branch, named after the issue.</strong></p>'+
       cmd('git switch main\ngit pull\ngit switch -c feat/1-summary-line')},
    {b:'<p><strong>Do the work, commit, push.</strong></p>'+
       cmd('git add notes.txt\ngit commit -m "Add a summary line at the top of notes"\ngit push')+
-      '<div class="tip"><span class="tag">Let this one fail. Read it.</span><p>You get <code>fatal: The current branch has no upstream branch</code> — and then the exact command to fix it. <strong>Git error messages usually contain the answer.</strong> Beginners see red and stop reading; that habit costs more time than anything else. Run the command it printed.</p></div>'},
+      '<div class="tip"><span class="tag">Let this one fail. Read it.</span><p>You get <code>fatal: The current branch has no upstream branch</code>, and then the exact command to fix it. <strong>Git error messages usually contain the answer.</strong> Beginners see red and stop reading; that habit costs more time than anything else. Run the command it printed.</p></div>'},
    {b:'<p><strong>Open the pull request.</strong> GitHub shows a <em>Compare &amp; pull request</em> banner. Click it. In the description, write:</p>'+
       '<div class="cmd"><pre>Closes #1.\n\nAdds a one-line summary at the top of notes.txt so the file\nexplains itself.</pre><button type="button" class="cp" data-c="Closes #1.">copy</button></div>'+
-      '<p style="margin-top:.4rem"><code>Closes #1</code> is not decoration — GitHub reads it and <strong>closes the issue automatically</strong> when this merges. It only works from the PR description or a commit message, not from a comment underneath.</p>'},
-   {b:'<p><strong>Review your own work.</strong> Click <strong>Files changed</strong> and actually read the diff. This is a genuinely useful habit — seeing your change laid out red-and-green catches things you missed while writing it.</p>'},
+      '<p style="margin-top:.4rem"><code>Closes #1</code> is not decoration: GitHub reads it and <strong>closes the issue automatically</strong> when this merges. It only works from the PR description or a commit message, not from a comment underneath.</p>'},
+   {b:'<p><strong>Review your own work.</strong> Click <strong>Files changed</strong> and actually read the diff. This is a genuinely useful habit: seeing your change laid out red-and-green catches things you missed while writing it.</p>'},
    {b:'<p><strong>Merge it,</strong> then watch issue #1 close by itself. Bring it down to your machine and clean up:</p>'+
       cmd('git switch main\ngit pull\ngit branch -d feat/1-summary-line\ngit fetch --prune')}]},
 
  {n:'07',t:'Cause a conflict on purpose',m:'20 min',nav:'Conflict',
   goal:'Break it deliberately, in a controlled way, so that the first time it happens for real you already know what you are looking at.',
   steps:[
-   {b:'<div class="tip"><span class="tag">Before you start</span><p>You are about to make Git refuse to do something. That is the intended outcome. A conflict is not an error and nothing gets lost.</p><p style="margin-top:.4rem">This uses the most common real-world cause: <strong>you edited the same file in two places</strong> — on the GitHub website and on your laptop.</p></div>'},
+   {b:'<div class="tip"><span class="tag">Before you start</span><p>You are about to make Git refuse to do something. That is the intended outcome. A conflict is not an error and nothing gets lost.</p><p style="margin-top:.4rem">This uses the most common real-world cause: <strong>you edited the same file in two places</strong>, on the GitHub website and on your laptop.</p></div>'},
    {b:'<p><strong>Edit on the website.</strong> Open <code>notes.txt</code> on GitHub, click the pencil icon, change the <strong>first line</strong>, and commit straight to <code>main</code>. GitHub now has a commit your laptop knows nothing about.</p>'},
-   {b:'<p><strong>Now edit the same first line on your laptop</strong> — do <em>not</em> pull first, that\'s the whole point. Then:</p>'+
+   {b:'<p><strong>Now edit the same first line on your laptop</strong>: do <em>not</em> pull first, that\'s the whole point. Then:</p>'+
       cmd('git add notes.txt\ngit commit -m "Change the first line locally"\ngit push')+
       out('push is rejected','! [rejected]        main -> main (fetch first)\nerror: failed to push some refs')+
       '<p style="margin-top:.4rem">Git is protecting you. GitHub has work you don\'t have, and pushing would erase it.</p>'},
@@ -1116,7 +1116,7 @@ var ACTS=[
    {b:'<p><strong>Open the file.</strong> Git has written both versions into it:</p>'+
       '<pre class="cfx" style="font-size:.78rem"><span class="top">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>\n  the line as you typed it on your laptop\n<span class="mid">=======</span>\n  the line as you typed it on the website\n<span class="bot">&gt;&gt;&gt;&gt;&gt;&gt;&gt; a1b2c3d (Update notes.txt)</span></pre>'+
       '<p style="margin-top:.5rem">See <a href="#conflict">Reading a Conflict</a> for what each marker means.</p>'},
-   {b:'<p><strong>Fix it by hand.</strong> Delete all three marker lines — <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> — and leave the text you want. Keep one version, both, or write something new.</p>'+
+   {b:'<p><strong>Fix it by hand.</strong> Delete all three marker lines (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) and leave the text you want. Keep one version, both, or write something new.</p>'+
       '<p>Then tell Git you\'re done:</p>'+
       cmd('git add notes.txt\ngit commit\ngit push')+
       '<p style="margin-top:.4rem">Your editor may open with a pre-written merge message. Just save and close it.</p>'+
@@ -1131,9 +1131,9 @@ var ACTS=[
    {b:'<p><strong>Committed too early?</strong> Undo the commit, keep the changes.</p>'+
       cmd('# undo the last commit, leave changes staged\ngit reset --soft HEAD~1')+
       cmd('# undo the last commit, changes back in the folder\ngit reset --mixed HEAD~1')},
-   {b:'<p><strong>Undo something you already pushed.</strong> This is the safe one — it makes a <em>new</em> commit that reverses the old one, so nothing is rewritten.</p>'+
+   {b:'<p><strong>Undo something you already pushed.</strong> This is the safe one: it makes a <em>new</em> commit that reverses the old one, so nothing is rewritten.</p>'+
       cmd('git log --oneline\ngit revert a1b2c3d')},
-   {b:'<p><strong>Stash — "put my mess in a drawer".</strong> For when you need to switch branches right now but aren\'t ready to commit.</p>'+
+   {b:'<p><strong>Stash: "put my mess in a drawer".</strong> For when you need to switch branches right now but aren\'t ready to commit.</p>'+
       cmd('git stash\n# ...do something else...\ngit stash pop')},
    {b:'<p><strong>The undo button for Git itself.</strong> If you ever think you have lost a commit, this is where it is.</p>'+
       cmd('git reflog')+
@@ -1142,25 +1142,25 @@ var ACTS=[
       cmd('git reset --hard')+
       '<p><code>--hard</code> throws away your uncommitted changes as well as the commit. Committed work can be recovered with <code>reflog</code>; <strong>uncommitted work cannot be recovered by anything.</strong></p>'+
       '<p style="margin-top:.4rem">Which is the entire argument for committing early and often. A commit is a save point, and save points are free.</p></div>'},
-   {b:'<div class="tip"><span class="tag">That is the hard part done</span><p>You now have a real repository with branches, a merged pull request, a closed issue and a conflict you fixed yourself. That is genuinely further than most people get in a first week.</p><p style="margin-top:.4rem">One step left, and it is the fun one — something permanent, public, and yours.</p></div>'}]},
+   {b:'<div class="tip"><span class="tag">That is the hard part done</span><p>You now have a real repository with branches, a merged pull request, a closed issue and a conflict you fixed yourself. That is genuinely further than most people get in a first week.</p><p style="margin-top:.4rem">One step left, and it is the fun one: something permanent, public, and yours.</p></div>'}]},
 
  {n:'09',t:'Build your GitHub profile page',m:'20 min',nav:'Your profile',
   goal:'Use everything so far to build something <strong>real that stays</strong>: the page people see when they visit your GitHub profile. It is a normal repository with one hidden trick.',
   steps:[
-   {b:'<div class="note"><span class="tag">The trick</span><p>If you make a repository whose name is <strong>exactly your username</strong>, GitHub treats its <code>README.md</code> as your profile page. Most people never find out this exists. It is the same Git you have been doing all along — no new commands.</p></div>'},
+   {b:'<div class="note"><span class="tag">The trick</span><p>If you make a repository whose name is <strong>exactly your username</strong>, GitHub treats its <code>README.md</code> as your profile page. Most people never find out this exists. It is the same Git you have been doing all along: no new commands.</p></div>'},
    {b:'<p><strong>Create the repository.</strong> On GitHub: <strong>+ → New repository</strong>. The name must match your username <em>character for character</em>. It must be <strong>Public</strong>, or nobody can see it.</p>'+
       '<p style="margin-top:.4rem">GitHub will show a little banner saying you found a secret. That is how you know you spelled it right.</p>'},
-   {b:'<div class="warn"><span class="tag">This time, DO tick "Add a README"</span><p>In Step 04 that box was the thing to avoid. Here it is the right call, and the reason is worth understanding rather than memorising: back then you already had commits on your laptop, so a commit made by GitHub created a <em>second, unrelated history</em>. This time there is nothing on your machine yet — so there is nothing to clash with.</p><p style="margin-top:.4rem">Rules like "never tick the box" are how people get stuck. Knowing <em>why</em> is how you get unstuck.</p></div>'},
+   {b:'<div class="warn"><span class="tag">This time, DO tick "Add a README"</span><p>In Step 04 that box was the thing to avoid. Here it is the right call, and the reason is worth understanding rather than memorising: back then you already had commits on your laptop, so a commit made by GitHub created a <em>second, unrelated history</em>. This time there is nothing on your machine yet, so there is nothing to clash with.</p><p style="margin-top:.4rem">Rules like "never tick the box" are how people get stuck. Knowing <em>why</em> is how you get unstuck.</p></div>'},
    {b:'<p><strong>Bring it down to your machine.</strong></p>'+
       cmd('git clone https://github.com/YOUR-NAME/YOUR-NAME.git\ncd YOUR-NAME')+
-      '<p style="margin-top:.4rem">Yes, your username twice — once as the owner, once as the repository.</p>'},
-   {b:'<p><strong>Write it.</strong> Open <code>README.md</code> in your editor. It is Markdown — plain text with a few marks that become formatting:</p>'+
+      '<p style="margin-top:.4rem">Yes, your username twice, once as the owner, once as the repository.</p>'},
+   {b:'<p><strong>Write it.</strong> Open <code>README.md</code> in your editor. It is Markdown, plain text with a few marks that become formatting:</p>'+
       '<div class="cmd"><pre># Your Name\n\nOne line about what you do.\n\n## What I am working on\n\n- Learning Git, properly\n- **Bold** for emphasis, *italics* like this\n- [A link](https://example.com)\n\n`inline code` looks like this\n</pre><button type="button" class="cp" data-c="# Your Name&#10;&#10;One line about what you do.&#10;&#10;## What I am working on&#10;&#10;- Learning Git, properly&#10;">copy</button></div>'+
       '<p style="margin-top:.4rem">Keep it short. A good profile is three lines and a link, not an autobiography.</p>'},
-   {b:'<p><strong>Ship it.</strong> Nothing new here — this is the loop from Step 03.</p>'+
+   {b:'<p><strong>Ship it.</strong> Nothing new here: this is the loop from Step 03.</p>'+
       cmd('git status\ngit add README.md\ngit commit -m "Write my profile"\ngit push')},
    {b:'<p><strong>Go and look.</strong> Visit <code>github.com/YOUR-NAME</code>. Your words are on your profile.</p>'+
-      '<div class="tip"><span class="tag">Why this one matters</span><p>Everything before this was practice you would throw away. This is the first thing you have made with Git that you will actually keep — and every future edit to it uses exactly the four commands you already know.</p><p style="margin-top:.4rem"><strong>The habit that makes it stick:</strong> put your next project in a repo on day one, however small. Everything on this page becomes automatic in a fortnight of ordinary use, and evaporates in a month of none.</p></div>'}]}
+      '<div class="tip"><span class="tag">Why this one matters</span><p>Everything before this was practice you would throw away. This is the first thing you have made with Git that you will actually keep, and every future edit to it uses exactly the four commands you already know.</p><p style="margin-top:.4rem"><strong>The habit that makes it stick:</strong> put your next project in a repo on day one, however small. Everything on this page becomes automatic in a fortnight of ordinary use, and evaporates in a month of none.</p></div>'}]}
 ];
 
 /* ===================== render acts ===================== */
@@ -1285,7 +1285,7 @@ var ACTS=[
     var a=ACTS.filter(function(x){return x.n===last})[0];
     if(a){
       document.getElementById('resume').classList.remove('hide');
-      document.getElementById('resumeTxt').textContent='You were on step '+a.n+' — '+a.t+'.';
+      document.getElementById('resumeTxt').textContent='You were on step '+a.n+': '+a.t+'.';
       document.getElementById('resumeBtn').onclick=function(){
         var el=document.getElementById('act-'+a.n);
         el.open=true; el.scrollIntoView({block:'start',behavior:'smooth'});
@@ -1325,7 +1325,7 @@ document.addEventListener('click',function(e){
    Pure state machine. No DOM, no globals, no browser APIs.
    test.js extracts everything between these sentinels and runs it in Node.
 
-   A small real git. Commits form a DAG and each carries a TREE — a map of
+   A small real git. Commits form a DAG and each carries a TREE: a map of
    filename to content version. The index is a tree too, which is what lets
    you stage one file and not another, and what makes a merge that touches
    different files succeed while one touching the same file conflicts. */
@@ -1423,11 +1423,11 @@ function createGit(opts){
   /* ---------- non-command actions ---------- */
   function editFile(name){
     name = name || 'notes.txt';
-    if(!S.init) return {ok:false, lines:[{t:'(make the repository first — run git init)',c:'d'}]};
+    if(!S.init) return {ok:false, lines:[{t:'(make the repository first: run git init)',c:'d'}]};
     buf=[]; S.v++;
     var isNew = S.wd[name]===undefined;
     S.wd[name]=S.v;
-    w('(you '+(isNew?'create':'edit')+' '+name+' in your editor — v'+S.v+')','d');
+    w('(you '+(isNew?'create':'edit')+' '+name+' in your editor: v'+S.v+')','d');
     if(isNew && ignored(name)) w('('+name+' is covered by .gitignore, so git will not even mention it)','d');
     blank();
     return {ok:true, lines:buf, moved:null};
@@ -1436,25 +1436,25 @@ function createGit(opts){
     buf=[];
     if(S.wd['.gitignore']!==undefined){ w('(.gitignore already exists)','d'); blank();
       return {ok:false, lines:buf}; }
-    if(!S.init){ w('(make the repository first — run git init)','d'); blank();
+    if(!S.init){ w('(make the repository first: run git init)','d'); blank();
       return {ok:false, lines:buf}; }
     S.v++; S.wd['.gitignore']=S.v;
     w('(you create .gitignore containing:  *.env  and  *.log )','d');
-    w('(run git status — anything matching those has vanished from it)','d');
+    w('(run git status: anything matching those has vanished from it)','d');
     blank();
     return {ok:true, lines:buf};
   }
   function remoteCommit(file){
     file = file || 'notes.txt';
     buf=[];
-    if(!S.hasRemote){ w('(connect a remote first — run git remote add origin)','d'); blank();
+    if(!S.hasRemote){ w('(connect a remote first: run git remote add origin)','d'); blank();
       return {ok:false, lines:buf}; }
     var base=S.remoteRefs.main||null, t=copyTree(treeOf(base));
     t[file]=(t[file]||0)+100;
     var sha=makeCommit('Update '+file+' via the website',[base],t,0);
     S.remoteRefs.main=sha; S.fetched=false;
     w('(over on github.com you edit '+file+' and commit it there)','d');
-    w('(your laptop knows nothing about this yet — that is the point)','d');
+    w('(your laptop knows nothing about this yet: that is the point)','d');
     blank();
     return {ok:true, lines:buf};
   }
@@ -1586,8 +1586,8 @@ function createGit(opts){
         return {ok:false, lines:buf, moved:null};
       }
       moved='add';
-      w(added ? '(no output — git add is silent when it works. Run git status.)'
-              : '(nothing new to add — box 1 already matches box 2)','d');
+      w(added ? '(no output: git add is silent when it works. Run git status.)'
+              : '(nothing new to add: box 1 already matches box 2)','d');
       blank(); return {ok:true, lines:buf, moved:moved};
     }
 
@@ -1603,7 +1603,7 @@ function createGit(opts){
                          isStaged()?S.idx:old.tree, old.lane);
       S.refs[S.HEAD]=ash; S.idx=copyTree(S.commits[ash].tree);
       w('['+S.HEAD+' '+ash+'] '+S.commits[ash].msg);
-      w('(note the id changed — amend does not edit a commit, it replaces it.','d');
+      w('(note the id changed: amend does not edit a commit, it replaces it.','d');
       w(' Fine before you push; needs a force push after.)','d');
       blank(); return {ok:true, lines:buf, moved:'commit'};
     }
@@ -1626,7 +1626,7 @@ function createGit(opts){
       if(/^git commit -am /.test(c)){
         var stU=statusOf();
         if(stU.untracked.length && !stU.modified.length && !isStaged()){
-          w('(-am only picks up files git already tracks — '+stU.untracked.join(', ')+' is untracked)','d');
+          w('(-am only picks up files git already tracks: '+stU.untracked.join(', ')+' is untracked)','d');
           w('nothing added to commit but untracked files present (use "git add" to track)');
           blank(); return {ok:false, lines:buf, moved:null};
         }
@@ -1687,12 +1687,12 @@ function createGit(opts){
       S.wd=copyTree(S.idx);
       Object.keys(untrackedKeep).forEach(function(f){ S.wd[f]=untrackedKeep[f]; });
       w("Switched to branch '"+to+"'");
-      w('(look at your files — git rewrote them to match this branch)','d');
+      w('(look at your files: git rewrote them to match this branch)','d');
       blank(); return {ok:true, lines:buf, moved:'branch'};
     }
     if(c==='git branch'){
       var names=Object.keys(S.refs);
-      if(!names.length){ w('(no branches yet — make a commit first)','d'); blank();
+      if(!names.length){ w('(no branches yet: make a commit first)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
       names.sort().forEach(function(n2){ w((n2===S.HEAD?'* ':'  ')+n2, n2===S.HEAD?'g':''); });
       blank(); return {ok:true, lines:buf, moved:null};
@@ -1719,7 +1719,7 @@ function createGit(opts){
       if(!S.merging){ w('fatal: There is no merge to abort.','r'); blank();
         return {ok:false, lines:buf, moved:null}; }
       S.merging=null; S.idx=copyTree(headTree()); S.wd=copyTree(S.idx);
-      w('(merge aborted — everything back exactly as it was)','d');
+      w('(merge aborted: everything back exactly as it was)','d');
       blank(); return {ok:true, lines:buf, moved:'merge'};
     }
     var mg=c.match(/^git merge ([\w./][\w./-]*)$/);
@@ -1800,7 +1800,7 @@ function createGit(opts){
       var stD=statusOf();
       if(!stD.modified.length){
         if(isStaged()){
-          w('(nothing — you already staged it. This is THE classic confusion.','d');
+          w('(nothing: you already staged it. This is THE classic confusion.','d');
           w(' git diff compares box 1 vs box 2. Try: git diff --staged)','d');
         } else w('(no unstaged changes)','d');
         blank(); return {ok:true, lines:buf, moved:null};
@@ -1843,8 +1843,8 @@ function createGit(opts){
       if(!touched){ w('(nothing to restore)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
       w(stagedMode
-        ? '(silent. Taken out of the basket — your edits are still in the file.)'
-        : '(silent. Your unsaved edits are gone — reverted to what was staged.)','d');
+        ? '(silent. Taken out of the basket: your edits are still in the file.)'
+        : '(silent. Your unsaved edits are gone: reverted to what was staged.)','d');
       blank(); return {ok:true, lines:buf, moved: stagedMode?'unstage':'restore'};
     }
     var rmc=c.match(/^git rm --cached (.+)$/);
@@ -1854,7 +1854,7 @@ function createGit(opts){
         return {ok:false, lines:buf, moved:null}; }
       delete S.idx[f3];
       w("rm '"+f3+"'");
-      w('(git has stopped tracking it. The file itself is untouched — this is how','d');
+      w('(git has stopped tracking it. The file itself is untouched: this is how','d');
       w(' you undo committing something that should have been ignored.)','d');
       blank(); return {ok:true, lines:buf, moved:'unstage'};
     }
@@ -1874,7 +1874,7 @@ function createGit(opts){
         return {ok:false, lines:buf, moved:null}; }
       var st4=(c==='git stash pop') ? S.stash.pop() : S.stash[S.stash.length-1];
       S.wd=copyTree(st4.wd); S.idx=copyTree(st4.idx);
-      w('(taken back out of the drawer — your changes are in the files again)','d');
+      w('(taken back out of the drawer: your changes are in the files again)','d');
       blank(); return {ok:true, lines:buf, moved:'stash'};
     }
     if(c==='git stash list'){
@@ -1921,13 +1921,13 @@ function createGit(opts){
 
     /* ---- reflog ---- */
     if(/^git reflog/.test(c)){
-      if(!S.reflog.length){ w('(nothing yet — the reflog fills up as you work)','d'); blank();
+      if(!S.reflog.length){ w('(nothing yet: the reflog fills up as you work)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
       for(var ri=S.reflog.length-1, n6=0; ri>=0; ri--, n6++){
         var e6=S.reflog[ri];
         w(e6.sha+' HEAD@{'+n6+'}: '+e6.action, n6===0?'u':'');
       }
-      w('(every position HEAD has been in. Nothing committed is ever really lost —','d');
+      w('(every position HEAD has been in. Nothing committed is ever really lost:','d');
       w(' git reset --hard <that id> takes you back.)','d');
       blank(); return {ok:true, lines:buf, moved:null};
     }
@@ -1947,7 +1947,7 @@ function createGit(opts){
       var rsha=makeCommit('Revert "'+bc.msg+'"',[tip()],nt2,laneFor(S.HEAD));
       S.refs[S.HEAD]=rsha; S.idx=copyTree(nt2); S.wd=copyTree(nt2);
       w('['+S.HEAD+' '+rsha+'] Revert "'+bc.msg+'"');
-      w('(revert does not delete anything — it adds a NEW commit that undoes the old','d');
+      w('(revert does not delete anything: it adds a NEW commit that undoes the old','d');
       w(' one. That is why it is safe on work you have already pushed.)','d');
       blank(); return {ok:true, lines:buf, moved:'commit'};
     }
@@ -1987,7 +1987,7 @@ function createGit(opts){
       S.refs[S.HEAD]=parent; S.idx=copyTree(treeOf(parent)); S.wd=copyTree(S.idx);
       w('Successfully rebased and updated refs/heads/'+S.HEAD+'.');
       pairs.forEach(function(p){ w('  '+p[0]+' became '+p[1]+'  '+S.commits[p[1]].msg,'u'); });
-      w('(look at those ids. Rebase did not MOVE your commits — it made brand new','d');
+      w('(look at those ids. Rebase did not MOVE your commits: it made brand new','d');
       w(' ones with the same changes and abandoned the originals. That is why the','d');
       w(' history is a straight line, and why a push now has to be forced.)','d');
       blank(); return {ok:true, lines:buf, moved:'rebase'};
@@ -1998,7 +1998,7 @@ function createGit(opts){
       if(S.hasRemote){ w('error: remote origin already exists.','r'); blank();
         return {ok:false, lines:buf, moved:null}; }
       S.hasRemote=true;
-      w('(silent. origin is now a nickname for that URL — nothing was sent.)','d');
+      w('(silent. origin is now a nickname for that URL: nothing was sent.)','d');
       blank(); return {ok:true, lines:buf, moved:'remote'};
     }
     if(c==='git remote -v'){
@@ -2010,7 +2010,7 @@ function createGit(opts){
     if(/^git fetch/.test(c)){
       if(!S.hasRemote){ w("fatal: 'origin' does not appear to be a git repository",'r'); blank();
         return {ok:false, lines:buf, moved:null}; }
-      if(!behind()){ w('(already up to date — nothing new on origin)','d'); blank();
+      if(!behind()){ w('(already up to date: nothing new on origin)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
       S.fetched=true;
       w('From github.com:you/git-practice');
@@ -2044,7 +2044,7 @@ function createGit(opts){
       w("Merge made by the 'ort' strategy.");
       w('(you and github changed DIFFERENT files, so git combined them with no','d');
       w(' help from you. Had you both changed the same one, this would have','d');
-      w(' stopped and asked — that is all a conflict is.)','d');
+      w(' stopped and asked: that is all a conflict is.)','d');
       blank(); return {ok:true, lines:buf, moved:'pull'};
     }
     if(/^git push/.test(c)){
@@ -2057,7 +2057,7 @@ function createGit(opts){
         w('fatal: The current branch '+S.HEAD+' has no upstream branch.','r');
         w('To push the current branch and set the remote-tracking branch, use'); blank();
         w('    git push --set-upstream origin '+S.HEAD,'u'); blank();
-        w('(Read the error — git just handed you the exact command.)','d');
+        w('(Read the error: git just handed you the exact command.)','d');
         blank(); return {ok:false, lines:buf, moved:null};
       }
       if(behind() && !/--force/.test(c)){
@@ -2066,7 +2066,7 @@ function createGit(opts){
         w("error: failed to push some refs to '"+URL+"'",'r');
         w('hint: Updates were rejected because the remote contains work that you do','d');
         w('hint: not have locally. Integrate the remote changes (e.g. "git pull")','d');
-        w('(git is protecting you — pushing now would erase what is on github.)','d');
+        w('(git is protecting you: pushing now would erase what is on github.)','d');
         blank(); return {ok:false, lines:buf, moved:null};
       }
       if(/-u|--set-upstream/.test(c)) S.upstream[S.HEAD]=true;
@@ -2081,7 +2081,7 @@ function createGit(opts){
     }
 
     if(c.indexOf('git ')!==0){
-      w("'"+c.split(' ')[0]+"' isn't a git command. This sandbox only speaks git — type help.",'r');
+      w("'"+c.split(' ')[0]+"' isn't a git command. This sandbox only speaks git: type help.",'r');
       blank(); return {ok:false, lines:buf, moved:null};
     }
     w("git: '"+c.slice(4).split(' ')[0]+"' isn't covered by this sandbox. Type help.",'r');
@@ -2200,7 +2200,7 @@ function createGit(opts){
   function draw(){
     var S=git.snapshot(), F=git.files();
 
-    /* box 1 — every file on disk, coloured by what git thinks of it */
+    /* box 1: every file on disk, coloured by what git thinks of it */
     var onDisk=F.filter(function(f){ return f.wd!==undefined; });
     document.getElementById('slot-wd').innerHTML = onDisk.length
       ? onDisk.map(function(f){
@@ -2212,13 +2212,13 @@ function createGit(opts){
         }).join('')
       : emp(S.init?'no files yet':'not a repo');
 
-    /* box 2 — only what is actually in the basket */
+    /* box 2: only what is actually in the basket */
     var staged=F.filter(function(f){ return f.status==='staged'; });
     document.getElementById('slot-idx').innerHTML = staged.length
       ? staged.map(function(f){
           return ftok('staged',f.name, f.head===undefined?'new file':'modified');
         }).join('')
-      : emp(S.init?'nothing staged':'—');
+      : emp(S.init?'nothing staged':'-');
 
     document.getElementById('slot-repo').innerHTML = S.commits
       ? tok('committed',S.commits+' commit'+(S.commits>1?'s':''),'HEAD → '+S.lastSha)
@@ -2274,7 +2274,7 @@ function createGit(opts){
     var host=document.getElementById('histScroll'), note=document.getElementById('histNote');
 
     if(!G.total){
-      host.innerHTML='<div class="hempty">Nothing committed yet — commits will appear here, '+
+      host.innerHTML='<div class="hempty">Nothing committed yet: commits will appear here, '+
         'with a marker showing where <code>main</code> and <code>origin/main</code> point.</div>';
       H={svg:null,edges:null,nodes:{},labels:{}};
       note.textContent='';
@@ -2321,7 +2321,7 @@ function createGit(opts){
       : !G.hasRemote
         ? 'All on your machine. No GitHub connection yet.'
         : G.diverged
-          ? '<b>Forked.</b> You and GitHub each have commits the other doesn’t — which is exactly why <code>git push</code> refuses.'
+          ? '<b>Forked.</b> You and GitHub each have commits the other doesn’t, which is exactly why <code>git push</code> refuses.'
         : a ? '<b>'+a+'</b> commit'+(a>1?'s':'')+' on your machine that GitHub doesn’t have yet.'
         : b ? 'GitHub has <b>'+b+'</b> commit'+(b>1?'s':'')+' you don’t have yet.'
         : 'In sync with GitHub.') + extra;
@@ -2569,7 +2569,7 @@ function createGit(opts){
     st=clone(base);edges=EDGES.slice();build();place();
     document.getElementById('glabel').textContent='Starting point';
     document.getElementById('gtitle').textContent='Your branch split off, and main moved on';
-    document.getElementById('gexp').innerHTML='<strong>Before either.</strong> You branched at <code>B</code> and made commits <code>D</code> and <code>E</code>. Meanwhile <code>main</code> gained <code>C</code>. Your work is built on an out-of-date starting point — that is the situation both commands solve.';
+    document.getElementById('gexp').innerHTML='<strong>Before either.</strong> You branched at <code>B</code> and made commits <code>D</code> and <code>E</code>. Meanwhile <code>main</code> gained <code>C</code>. Your work is built on an out-of-date starting point: that is the situation both commands solve.';
   }
   document.getElementById('g-merge').onclick=function(){
     reset();setTimeout(function(){
@@ -2577,7 +2577,7 @@ function createGit(opts){
       build();place();
       document.getElementById('glabel').textContent='git merge';
       document.getElementById('gtitle').textContent='Both lines kept, joined by a new commit';
-      document.getElementById('gexp').innerHTML='<strong>Merge.</strong> Nothing that already existed changed — <code>D</code> and <code>E</code> keep their original IDs. One new commit <code>M</code> is created with <strong>two parents</strong>, tying the lines together. The history records what genuinely happened, fork and all. Your next push is an ordinary push.';
+      document.getElementById('gexp').innerHTML='<strong>Merge.</strong> Nothing that already existed changed: <code>D</code> and <code>E</code> keep their original IDs. One new commit <code>M</code> is created with <strong>two parents</strong>, tying the lines together. The history records what genuinely happened, fork and all. Your next push is an ordinary push.';
     },60);};
   document.getElementById('g-rebase').onclick=function(){
     reset();setTimeout(function(){
@@ -2587,8 +2587,8 @@ function createGit(opts){
       build();place();
       [els.D.s,els.E.s].forEach(function(t){t.classList.add('shaflash')});
       document.getElementById('glabel').textContent='git rebase';
-      document.getElementById('gtitle').textContent='Your commits copied on top — with new names';
-      document.getElementById('gexp').innerHTML='<strong>Rebase.</strong> Watch the IDs — <code>d4e5f6a</code> became <code>7f1e9a4</code>. These are <strong>not the same commits moved</strong>; they are brand new commits carrying the same changes, and the originals are abandoned. That is why the history is now a straight line, why it no longer shows that a fork ever happened, and why your next push has to be forced.';
+      document.getElementById('gtitle').textContent='Your commits copied on top, with new names';
+      document.getElementById('gexp').innerHTML='<strong>Rebase.</strong> Watch the IDs: <code>d4e5f6a</code> became <code>7f1e9a4</code>. These are <strong>not the same commits moved</strong>; they are brand new commits carrying the same changes, and the originals are abandoned. That is why the history is now a straight line, why it no longer shows that a fork ever happened, and why your next push has to be forced.';
     },60);};
   document.getElementById('g-reset').onclick=reset;
   reset();
@@ -2602,28 +2602,28 @@ function createGit(opts){
          rebase:{bot:'&gt;&gt;&gt;&gt;&gt;&gt;&gt; 36043ba (Add a title)'}};
   var EXP={
     merge:{
-      top:'<strong>The opening marker.</strong> Everything from here to <code>=======</code> is <code>HEAD</code> — and in a merge, HEAD is <strong>the branch you are standing on</strong>. This is <em>your</em> work.',
+      top:'<strong>The opening marker.</strong> Everything from here to <code>=======</code> is <code>HEAD</code>, and in a merge, HEAD is <strong>the branch you are standing on</strong>. This is <em>your</em> work.',
       a:'<strong>Your side.</strong> You were on <code>main</code> and ran <code>git merge add-a-title</code>, so this is what <code>main</code> already had.',
-      mid:'<strong>The divider.</strong> Just a separator between the two versions. It carries no meaning — and it gets deleted along with the other two.',
+      mid:'<strong>The divider.</strong> Just a separator between the two versions. It carries no meaning, and it gets deleted along with the other two.',
       b:'<strong>Their side.</strong> The content arriving from the branch you asked to merge in.',
-      bot:'<strong>The closing marker — the useful one.</strong> It names a <strong>branch</strong>. A branch name here means <strong>you are in a merge</strong>.'},
+      bot:'<strong>The closing marker: the useful one.</strong> It names a <strong>branch</strong>. A branch name here means <strong>you are in a merge</strong>.'},
     rebase:{
-      top:'<strong>The opening marker — and here is the trap.</strong> It still says <code>HEAD</code>, but in a rebase HEAD is <strong>the branch you are rebasing ONTO</strong>. This is <em>not</em> your work.',
-      a:'<strong>Not yours.</strong> This is what was already on the target branch. People delete this half thinking it is someone else\'s and lose nothing — or keep it thinking it is theirs, and lose their own work.',
-      mid:'<strong>The divider.</strong> Same as in a merge — just a separator, and it gets deleted too.',
+      top:'<strong>The opening marker, and here is the trap.</strong> It still says <code>HEAD</code>, but in a rebase HEAD is <strong>the branch you are rebasing ONTO</strong>. This is <em>not</em> your work.',
+      a:'<strong>Not yours.</strong> This is what was already on the target branch. People delete this half thinking it is someone else\'s and lose nothing, or keep it thinking it is theirs, and lose their own work.',
+      mid:'<strong>The divider.</strong> Same as in a merge: just a separator, and it gets deleted too.',
       b:'<strong>This is yours.</strong> In a rebase your own commit is replayed on top, so it lands on the <em>bottom</em> half. The exact opposite of a merge.',
-      bot:'<strong>The tell.</strong> It names a <strong>commit</strong> — an ID and a message — not a branch. That means <strong>you are in a rebase</strong> and the sides are flipped.'}
+      bot:'<strong>The tell.</strong> It names a <strong>commit</strong> (an ID and a message), not a branch. That means <strong>you are in a rebase</strong> and the sides are flipped.'}
   };
   function render(){
     block.innerHTML=
       '<span class="mk top" data-p="top">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>\n'+
-      '<span class="mk top" data-p="a">  My notes — first draft</span>\n'+
+      '<span class="mk top" data-p="a">  My notes: first draft</span>\n'+
       '<span class="mk mid" data-p="mid">=======</span>\n'+
-      '<span class="mk bot" data-p="b">  My notes — with a title</span>\n'+
+      '<span class="mk bot" data-p="b">  My notes, with a title</span>\n'+
       '<span class="mk bot" data-p="bot">'+T[mode].bot+'</span>';
     outp.innerHTML = mode==='merge'
       ? 'You are on <code>main</code> and ran <code>git merge add-a-title</code>. <strong>Click any line above.</strong>'
-      : 'You are on your branch and ran <code>git rebase main</code>. <strong>Click any line above</strong> — notice the top half now means something different.';
+      : 'You are on your branch and ran <code>git rebase main</code>. <strong>Click any line above</strong>: notice the top half now means something different.';
   }
   block.addEventListener('click',function(ev){
     var el=ev.target.closest('.mk');if(!el)return;
@@ -2647,19 +2647,19 @@ function createGit(opts){
    ['setup','git config --global --list','Show everything you have configured.'],
    ['start','git init','Turn the current folder into a repository. Creates the hidden .git folder.'],
    ['start','git clone <url>','Download an existing repository, with its full history.'],
-   ['look','git status','Which of the four boxes your work is in — and what to type next. Run it constantly.'],
+   ['look','git status','Which of the four boxes your work is in, and what to type next. Run it constantly.'],
    ['look','git diff','Working folder vs staging. Shows nothing once you have staged. Not a bug.'],
    ['look','git diff --staged','Staging vs last commit. This is the one you want after git add.'],
    ['look','git log --oneline','Compact history, newest first.'],
    ['look','git log --oneline --graph --all','The shape of every branch. Best way to see what a merge did.'],
-   ['look','git show <id>','Everything about one commit — message, author, full diff.'],
+   ['look','git show <id>','Everything about one commit: message, author, full diff.'],
    ['look','git blame <file>','Who last changed each line, and in which commit.'],
    ['save','git add <file>','Move a change into the basket. Saves nothing by itself.'],
    ['save','git add .','Stage everything changed below the current folder.'],
    ['save','git commit -m "message"','Turn everything staged into a permanent save point.'],
    ['save','git commit -am "message"','Stage all already-tracked changes and commit. Ignores brand new files.'],
    ['save','git commit --amend','Rewrite your last commit. Fine before pushing; needs a force push after.'],
-   ['undo','git restore <file>','Throw away unstaged edits. Cannot be undone — they were never committed.'],
+   ['undo','git restore <file>','Throw away unstaged edits. Cannot be undone: they were never committed.'],
    ['undo','git restore --staged <file>','Take it out of the basket. Your edits stay in the file.'],
    ['undo','git reset --soft HEAD~1','Undo the last commit, keep the changes staged.'],
    ['undo','git reset --mixed HEAD~1','Undo the last commit, changes drop back into the folder. The default.'],
@@ -2672,7 +2672,7 @@ function createGit(opts){
    ['branch','git switch main','Move to an existing branch.'],
    ['branch','git checkout -b <name>','The older way to do switch -c. You will see it in old tutorials.'],
    ['branch','git branch','List your branches. The * is where you are.'],
-   ['branch','git branch -d <name>','Safe delete — refuses if the branch is not merged yet.'],
+   ['branch','git branch -d <name>','Safe delete: refuses if the branch is not merged yet.'],
    ['branch','git branch -D <name>','Force delete. Needed after a squash merge.'],
    ['branch','git merge <name>','Bring another branch into this one.'],
    ['branch','git merge --abort','Back out of a merge that went wrong. Everything as it was.'],
@@ -2717,22 +2717,22 @@ function createGit(opts){
 (function(){
   var Q=[
    {q:'You run <code>git add notes.txt</code>, then <code>git diff</code>. Nothing appears. Why?',
-    o:['The add failed','Nothing is wrong — <code>git diff</code> compares your folder against <em>staging</em>, and they now match','The file got committed automatically','Git only diffs files under 100 lines'],
+    o:['The add failed','Nothing is wrong: <code>git diff</code> compares your folder against <em>staging</em>, and they now match','The file got committed automatically','Git only diffs files under 100 lines'],
     a:1,e:'Plain <code>git diff</code> asks "what have I changed that isn\'t staged?" After staging, the honest answer is nothing. Use <code>git diff --staged</code> to compare staging against your last commit.'},
    {q:'What does <code>git add</code> actually do?',
-    o:['Saves your changes permanently','Uploads the file to GitHub','Moves the change into the staging area — the basket for your next commit','Creates a backup copy of the file'],
+    o:['Saves your changes permanently','Uploads the file to GitHub','Moves the change into the staging area: the basket for your next commit','Creates a backup copy of the file'],
     a:2,e:'It saves nothing on its own. It only decides <em>what goes into</em> the next commit. That separation is what lets you commit some changes and leave others for later.'},
    {q:'You created your GitHub repo with "Add a README" ticked, and now your first push fails. Why?',
     o:['GitHub repos always need a second push','Your internet dropped mid-push','The README made a commit, so GitHub and your laptop have two unrelated histories','READMEs must be added last'],
-    a:2,e:'Both sides now have a commit the other has never seen, so Git refuses to guess how they relate. Fix it with <code>git pull origin main --allow-unrelated-histories</code> — or avoid it entirely by creating the repo completely empty.'},
+    a:2,e:'Both sides now have a commit the other has never seen, so Git refuses to guess how they relate. Fix it with <code>git pull origin main --allow-unrelated-histories</code>, or avoid it entirely by creating the repo completely empty.'},
    {q:'During a <code>git rebase</code>, the <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> side contains…',
-    o:['Your commit — the one being replayed','The branch you are rebasing ONTO. <em>Not</em> yours','Whichever version is newer','The shorter of the two versions'],
+    o:['Your commit: the one being replayed','The branch you are rebasing ONTO. <em>Not</em> yours','Whichever version is newer','The shorter of the two versions'],
     a:1,e:'This is the trap, and it is the opposite of a merge. In a merge HEAD is your branch; in a rebase HEAD is the target and <em>your</em> commit sits on the bottom. The tell is the bottom marker: a branch name means merge, a commit ID means rebase.'},
    {q:'You committed an API key and pushed it. You then delete the line and push again. Are you safe?',
-    o:['Yes, the line is gone','No — it is still in the history, and you must treat that key as compromised','Yes, if the repo is private','Only if you deleted it within 24 hours'],
-    a:1,e:'Every commit is kept forever. Anyone can read the old version. Deleting the line does not remove it from history — you have to revoke and replace the key. This is why <code>.gitignore</code> goes in <em>before</em> the first commit.'},
+    o:['Yes, the line is gone','No: it is still in the history, and you must treat that key as compromised','Yes, if the repo is private','Only if you deleted it within 24 hours'],
+    a:1,e:'Every commit is kept forever. Anyone can read the old version. Deleting the line does not remove it from history: you have to revoke and replace the key. This is why <code>.gitignore</code> goes in <em>before</em> the first commit.'},
    {q:'You ran <code>git reset --hard</code> and lost a commit you needed. Is it recoverable?',
-    o:['No, it is gone for good','Yes — <code>git reflog</code> still has it for about 90 days','Only if you had pushed it first','Only with a paid GitHub plan'],
+    o:['No, it is gone for good','Yes: <code>git reflog</code> still has it for about 90 days','Only if you had pushed it first','Only with a paid GitHub plan'],
     a:1,e:'Committed work is very hard to lose. <code>git reflog</code> lists every position HEAD has held; find the ID and reset back to it. <strong>The real exception:</strong> <code>--hard</code> also destroys <em>uncommitted</em> changes, and nothing recovers those.'},
    {q:'You are working alone. Why bother with branches at all?',
     o:['Git refuses to commit without one','So you can abandon a failed experiment cleanly, keep main working, and know the motion every team expects','They make Git run faster','They are required for GitHub to display your repo'],
@@ -2752,13 +2752,13 @@ function createGit(opts){
       if(k===Q[i].a)o.classList.add('right');else if(k===j)o.classList.add('wrong');});
     var ex=card.querySelector('.qex');ex.innerHTML=Q[i].e;ex.hidden=false;
     var n=0,t=0;for(var k in scored){t++;if(scored[k])n++;}
-    document.getElementById('score').textContent=n+' / '+t+' correct'+(t===Q.length?'  —  all seven answered.':'');
+    document.getElementById('score').textContent=n+' / '+t+' correct'+(t===Q.length?', all seven answered.':'');
   });
 })();
 
 /* ===================== the practical =====================
    A second, independent sandbox. Tasks are graded on the repository's actual
-   state, not on what the student typed — so there are many right answers and
+   state, not on what the student typed, so there are many right answers and
    no way to pass by copying a string. */
 (function(){
   var term=document.getElementById('xterm'), input=document.getElementById('xinput');
@@ -2777,20 +2777,20 @@ function createGit(opts){
      ok:function(s){ return s.init; }},
 
     {t:'Create a file and put it in the basket',
-     b:'Create <code>notes.txt</code> using the <strong>Edit the file</strong> button, then stage it — but do <em>not</em> commit it yet.',
-     h:'Press <strong>Edit the file</strong>, then <code>git add notes.txt</code>. Check with <code>git status</code> — it should be under "Changes to be committed".',
+     b:'Create <code>notes.txt</code> using the <strong>Edit the file</strong> button, then stage it, but do <em>not</em> commit it yet.',
+     h:'Press <strong>Edit the file</strong>, then <code>git add notes.txt</code>. Check with <code>git status</code>: it should be under "Changes to be committed".',
      ok:function(s){ return s.staged; }},
 
     {t:'Commit it, with a specific message',
      b:'Save it as a commit whose message is exactly <code>first commit</code>.',
-     h:'<code>git commit -m "first commit"</code> — the <code>-m</code> is what stops an editor opening.',
+     h:'<code>git commit -m "first commit"</code>: the <code>-m</code> is what stops an editor opening.',
      ok:function(s){ return s.graph.nodes.some(function(n){ return n.msg==='first commit'; }); }},
 
     {t:'Stage one file, not the other',
-     b:'Two files now have changes. Put <strong>only</strong> <code>todo.txt</code> in the basket — leave <code>notes.txt</code> out of it.',
+     b:'Two files now have changes. Put <strong>only</strong> <code>todo.txt</code> in the basket: leave <code>notes.txt</code> out of it.',
      h:'<code>git add todo.txt</code>. Naming the file is the point: <code>git add .</code> would sweep up both, and here that is wrong.',
      setup:function(){ git.editFile('notes.txt'); git.editFile('todo.txt'); },
-     setupNote:'(notes.txt has been edited, and todo.txt is brand new — check git status)',
+     setupNote:'(notes.txt has been edited, and todo.txt is brand new: check git status)',
      ok:function(s){
        return s.stagedList.indexOf('todo.txt')>-1
            && s.stagedList.indexOf('notes.txt')===-1
@@ -2808,7 +2808,7 @@ function createGit(opts){
      ok:function(s){ return s.branch==='fix-typo'; }},
 
     {t:'Do some work on the branch',
-     b:'Change the file and commit that change — on <code>fix-typo</code>, not on <code>main</code>.',
+     b:'Change the file and commit that change: on <code>fix-typo</code>, not on <code>main</code>.',
      h:'Edit the file, <code>git add notes.txt</code>, then <code>git commit -m "fix the typo"</code>.',
      ok:function(s){
        if(s.branch!=='fix-typo') return false;
@@ -2819,7 +2819,7 @@ function createGit(opts){
 
     {t:'Merge it back into main',
      b:'Get back onto <code>main</code> and bring the <code>fix-typo</code> work into it.',
-     h:'<code>git switch main</code>, then <code>git merge fix-typo</code>. Because main has not moved, this fast-forwards — no merge commit needed.',
+     h:'<code>git switch main</code>, then <code>git merge fix-typo</code>. Because main has not moved, this fast-forwards: no merge commit needed.',
      ok:function(s){
        if(s.branch!=='main' || s.merging) return false;
        if(!fixTip) fixTip=refSha(s,'fix-typo');
@@ -2828,20 +2828,20 @@ function createGit(opts){
      }},
 
     {t:'Tidy up the branch',
-     b:'The work is merged, so the branch has done its job. Delete it — using the <em>safe</em> delete, the one that refuses if the work is not merged.',
+     b:'The work is merged, so the branch has done its job. Delete it, using the <em>safe</em> delete, the one that refuses if the work is not merged.',
      h:'<code>git branch -d fix-typo</code>. Lowercase <code>-d</code> is the safe one; <code>-D</code> forces it.',
      ok:function(s){ return s.branches.indexOf('fix-typo')===-1; }},
 
     {t:'Someone changed it on GitHub',
      b:'While you were working, someone added a <code>README.md</code> on the website. GitHub now has a commit you do not. Get it onto your machine.',
-     h:'<code>git pull</code>. (Or <code>git fetch</code> then <code>git merge origin/main</code> — pull is those two in one.)',
+     h:'<code>git pull</code>. (Or <code>git fetch</code> then <code>git merge origin/main</code>: pull is those two in one.)',
      setup:function(){ git.remoteCommit('README.md'); },
-     setupNote:'(someone added a README.md on github.com — check git status)',
+     setupNote:'(someone added a README.md on github.com: check git status)',
      ok:function(s){ return s.hasRemote && s.behind===0 && !s.merging; }},
 
     {t:'Get back a commit you "lost"',
      b:'A <code>git reset --hard</code> has just thrown away your last commit. It is not gone. Find it and get back to it.',
-     h:'<code>git reflog</code> lists everywhere HEAD has been — your commit is still in there. Copy its id, then <code>git reset --hard &lt;that id&gt;</code>.',
+     h:'<code>git reflog</code> lists everywhere HEAD has been: your commit is still in there. Copy its id, then <code>git reset --hard &lt;that id&gt;</code>.',
      setup:function(){
        git.editFile('notes.txt'); git.exec('git add notes.txt');
        git.exec('git commit -m "important work"');
@@ -2894,7 +2894,7 @@ function createGit(opts){
     if(!okNow) return;
     passed[idx]=true;
     o('');
-    o('<span class="g">✓ Task '+(idx+1)+' complete — '+esc(t.t)+'</span>');
+    o('<span class="g">✓ Task '+(idx+1)+' complete: '+esc(t.t)+'</span>');
     paintTask();
     if(idx<TASKS.length-1){
       o('<span class="d">(moving on…)</span>');
@@ -2905,7 +2905,7 @@ function createGit(opts){
       o('<span class="g">── All '+TASKS.length+' tasks done. '+n+' of '+TASKS.length+' passed. ──</span>');
       o('<span class="d">Unaided, you have just done the whole thing: started a repository, staged</span>','d');
       o('<span class="d">one file and deliberately not another, committed, pushed, branched, merged,</span>','d');
-      o('<span class="d">tidied up, pulled someone else\'s work — and brought back a commit that had</span>','d');
+      o('<span class="d">tidied up, pulled someone else\'s work, and brought back a commit that had</span>','d');
       o('<span class="d">been destroyed. That is the job. Nothing beyond this is a different kind of</span>','d');
       o('<span class="d">thing, only more of the same.</span>','d');
     }
@@ -2935,7 +2935,7 @@ function createGit(opts){
   };
   document.getElementById('x-skip').onclick=function(){
     if(idx>=TASKS.length-1){ o('<span class="d">(that is the last task)</span>'); return; }
-    o('<span class="d">(skipped — you can come back and restart any time)</span>');
+    o('<span class="d">(skipped: you can come back and restart any time)</span>');
     idx++; announce();
   };
   document.getElementById('x-reset').onclick=function(){
@@ -2947,7 +2947,7 @@ function createGit(opts){
   });
 
   function boot(){
-    o('<span class="d">A fresh, separate repository — nothing you did in the sandbox above counts here.</span>');
+    o('<span class="d">A fresh, separate repository: nothing you did in the sandbox above counts here.</span>');
     o('<span class="d">Do what each task asks. It is graded on the state of the repo, not on what you typed,</span>');
     o('<span class="d">so any correct route works. Type </span><span class="b">git status</span><span class="d"> whenever you lose your bearings.</span>');
     announce();
@@ -2983,7 +2983,7 @@ function createGit(opts){
     if(e.key==='Escape' && body.classList.contains('nav-open') && !wide()) set(false);
   });
 
-  // open by default on a wide screen, closed on a narrow one — then remember the choice
+  // open by default on a wide screen, closed on a narrow one, then remember the choice
   var saved=STORE.get('gfz-nav',null);
   set(saved===null ? wide() : saved==='1');
 

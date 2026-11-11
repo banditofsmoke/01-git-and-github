@@ -3,7 +3,7 @@
  *
  *   node test.js
  *
- * No dependencies and no build step, on purpose — the whole project is one HTML
+ * No dependencies and no build step, on purpose: the whole project is one HTML
  * file you can open from disk, and the tests should not change that. So instead
  * of importing a module, this reads index.html and pulls the engine out from
  * between the GIT-ENGINE sentinels. If someone edits the engine, these run
@@ -171,7 +171,7 @@ describe('undo', () => {
   });
 });
 
-describe('box 4 — the remote', () => {
+describe('box 4: the remote', () => {
   it('push without a remote fails', () => {
     const g = committed();
     const r = g.exec('git push');
@@ -289,7 +289,7 @@ describe('when GitHub is ahead of you', () => {
   });
 });
 
-describe('more than one file — what staging is actually for', () => {
+describe('more than one file: what staging is actually for', () => {
   it('you can stage one file and leave another alone', () => {
     const g = committed();
     g.editFile('notes.txt'); g.editFile('todo.txt');
@@ -343,13 +343,13 @@ describe('.gitignore', () => {
     const r = g.exec('git add secrets.env');
     eq(r.ok, false); includes(r.lines, 'ignored by one of your .gitignore files');
   });
-  it('ignoring does NOT untrack something already committed — rm --cached does', () => {
+  it('ignoring does NOT untrack something already committed: rm --cached does', () => {
     const g = committed();
     g.editFile('secrets.env');
     g.exec('git add secrets.env'); g.exec('git commit -m "oops, committed a secret"');
     ok(g.snapshot().tree['secrets.env'] !== undefined, 'the secret is in history');
     g.addIgnore();
-    ok(g.snapshot().tree['secrets.env'] !== undefined, 'gitignore did not help — still tracked');
+    ok(g.snapshot().tree['secrets.env'] !== undefined, 'gitignore did not help: still tracked');
     ok(g.exec('git rm --cached secrets.env').ok, 'rm --cached is the fix');
     ok(g.snapshot().stagedList.indexOf('secrets.env') > -1, 'staged as a deletion');
   });
@@ -422,7 +422,7 @@ describe('branches', () => {
     g.exec('git switch main');
     eq(g.snapshot().wd, v0, 'file went back when we switched away');
     g.exec('git switch feature');
-    eq(g.snapshot().wd, v1, 'and returned when we switched back — nothing lost');
+    eq(g.snapshot().wd, v1, 'and returned when we switched back: nothing lost');
   });
   it('refuses to switch with uncommitted changes', () => {
     const g = committed(); g.exec('git switch -c feature'); g.exec('git switch main');
@@ -530,7 +530,7 @@ describe('deleting branches', () => {
 });
 
 describe('rebase', () => {
-  /* feature branched off, then main moved on — the classic setup */
+  /* feature branched off, then main moved on: the classic setup */
   function diverged() {
     const g = committed();
     g.exec('git switch -c feature');
@@ -546,7 +546,7 @@ describe('rebase', () => {
     const r = g.exec('git rebase main');
     ok(r.ok);
     const after = g.snapshot().lastSha;
-    ok(before !== after, 'the commit id changed — it is a new commit, not a moved one');
+    ok(before !== after, 'the commit id changed: it is a new commit, not a moved one');
     includes(r.lines, 'became');
     includes(r.lines, 'abandoned the originals');
   });
@@ -665,7 +665,7 @@ describe('revert and amend', () => {
     const g = committed();
     const before = g.snapshot().lastSha;
     ok(g.exec('git commit --amend -m "better message"').ok);
-    ok(g.snapshot().lastSha !== before, 'the id changed — it is a replacement');
+    ok(g.snapshot().lastSha !== before, 'the id changed: it is a replacement');
     ok(g.snapshot().graph.nodes.some(x => x.msg === 'better message'), 'new message stuck');
   });
 });
