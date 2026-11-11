@@ -33,13 +33,17 @@ the merge conflict.
   `reflog`, `revert`, `commit --amend`. A rebase leaves the abandoned originals on the graph as
   ghosts, and `reflog` really does recover what `reset --hard` threw away.
 - **An eleven-task practical exam.** Graded on the repository's actual state, not on what was typed,
-  so any correct route works and there is no way to pass by copying a string.
+  so any correct route works and there is no way to pass by copying a string. Close the tab halfway
+  and it picks up where you left off: the same repository, down to the same commit IDs.
 - **A merge-vs-rebase visualiser** where the commit IDs visibly change on rebase: the detail
   that makes "rewriting history" finally click.
 - **A clickable conflict block** showing that `<<<<<<< HEAD` means *opposite things* in a merge
   and in a rebase, which is how people end up deleting their own work.
+- **Nineteen badges that mean absolutely nothing.** Most are for getting it wrong and coming back:
+  reading the error, backing out of a merge, digging a commit out of the reflog. Getting stuck is
+  most of learning Git, so it should count for something.
 - Per-OS commands (Windows / macOS / Linux), a table of the errors beginners actually hit,
-  53 filterable commands, and a quiz.
+  56 filterable commands, and a quiz that remembers your answers.
 
 ## Running it yourself
 
@@ -65,15 +69,19 @@ The sandbox is a pure state machine with no DOM access, so it can be tested dire
 node test.js
 ```
 
-87 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
+111 assertions, no dependencies, no build step, no test framework. `test.js` reads `index.html`
 and extracts the engine from between the `==GIT-ENGINE-START==` / `==GIT-ENGINE-END==`
-sentinels, which keeps the page a single self-contained file you can still open from disk.
+sentinels, and the progress code from between `==PROGRESS-CODE-START==` / `==PROGRESS-CODE-END==`,
+which keeps the page a single self-contained file you can still open from disk.
 
 They cover the four-box transitions, the `git diff`-shows-nothing-after-`add` case, push
 rejection when the remote is ahead, fast-forward vs merge pulls, and (the reason they exist)
 that the guided **Do the next thing** button can walk a user all the way to GitHub without
 typing. That last one is a regression test: it previously could not, because nothing offered
 `git remote add` or `git push -u`.
+
+The progress code has its own: it has to survive the round trip, still read a code made before
+it carried the quiz and the practical, and refuse anything that isn't one.
 
 ## Built with
 
@@ -83,9 +91,12 @@ request is to Google Fonts; block it and the page falls back to system fonts and
 ## Privacy
 
 No accounts, no analytics, no tracking, no database, no server-side anything. Your progress,
-your chosen OS and your theme are kept in your own browser's `localStorage` and never leave your
-machine. If your browser blocks site storage, the page says so and everything still works,
-you just don't get progress saved.
+quiz answers, practical, badges, chosen OS and theme are kept in your own browser's
+`localStorage` and never leave your machine. If your browser blocks site storage, the page says
+so and everything still works, you just don't get progress saved.
+
+To carry it all to another browser, copy your progress code and paste it there. The code *is*
+the progress, written out, so there is nowhere else it is kept.
 
 ## Teaching it to someone else
 
@@ -107,6 +118,5 @@ instructions were checked against [git-scm.com/install](https://git-scm.com/inst
 than assumed; the old `git-scm.com/downloads` URL now redirects, and the macOS binary installer
 was discontinued in 2021.
 
-Icons (`favicon.svg`, `favicon.ico`, `apple-touch-icon.png`) are generated from
-[`icon-512.png`](icon-512.png): a commit node branching to another, in the page's own amber
-and steel.
+Icons (`favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, [`icon-512.png`](icon-512.png))
+all draw one mark: a commit node branching to another, in the page's own violet and steel.

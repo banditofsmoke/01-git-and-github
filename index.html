@@ -6,8 +6,8 @@
 <title>Git From Zero</title>
 <meta name="description" content="Learn Git and GitHub from absolutely nothing. A self-paced solo walkthrough with a live sandbox, a merge-vs-rebase visualiser, and a conflict you cause on purpose.">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#161813" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#E8EAE5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141519" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E8E9ED" media="(prefers-color-scheme: light)">
 <link rel="canonical" href="https://git-lesson.sletchersystems.com/">
 
 <meta property="og:type" content="website">
@@ -29,15 +29,16 @@
 
 <style>
 :root{
-  --ground:#E8EAE5; --panel:#F5F6F3; --panel-2:#DEE1D9; --inset:#FBFCFA;
-  --ink:#171A15; --ink-2:#565B51; --ink-3:#878C81;
-  --rule:#C9CDC2; --rule-soft:#DBDFD5;
-  --amber:#A8720F; --amber-hi:#C9911F; --amber-wash:#F0E4CC;
-  --steel:#2C5C79; --steel-wash:#D9E4EB;
+  --ground:#E8E9ED; --panel:#F5F6F8; --panel-2:#DCDEE4; --inset:#FBFBFC;
+  --ink:#16181D; --ink-2:#545966; --ink-3:#6E7380;
+  --rule:#C7CAD2; --rule-soft:#D9DBE1;
+  --accent:#5A44AE; --accent-wash:#E5E0F5;
+  --accent-fill:#5A44AE; --accent-fill-hi:#6A55C0;
+  --steel:#2C5C79; --steel-wash:#D7E2EA;
   --add:#35702F; --add-wash:#DCE9DA;
   --del:#9E3229; --del-wash:#F0DCD9;
-  --term-bg:#1B1E18; --term-ink:#DDE0D6;
-  --sh:0 1px 2px rgba(23,26,21,.06),0 4px 14px rgba(23,26,21,.05);
+  --term-bg:#1A1C21; --term-ink:#DCDFE6;
+  --sh:0 1px 2px rgba(22,24,29,.06),0 4px 14px rgba(22,24,29,.05);
   --f-disp:"Archivo","Helvetica Neue",Arial,sans-serif;
   --f-tag:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
   --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
@@ -45,26 +46,28 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --ground:#161813; --panel:#1E211A; --panel-2:#282C23; --inset:#191C16;
-    --ink:#E7EAE2; --ink-2:#A2A899; --ink-3:#767C6D;
-    --rule:#343A2E; --rule-soft:#2A2F25;
-    --amber:#DFA43C; --amber-hi:#EFBB5C; --amber-wash:#3A2E17;
-    --steel:#78ADCB; --steel-wash:#1B2B34;
+    --ground:#141519; --panel:#1B1D22; --panel-2:#25272E; --inset:#17181C;
+    --ink:#E6E8EE; --ink-2:#A3A7B2; --ink-3:#7E8390;
+    --rule:#32353D; --rule-soft:#282A31;
+    --accent:#A898EC; --accent-wash:#25213A;
+    --accent-fill:#6652BE; --accent-fill-hi:#7461CB;
+    --steel:#78ADCB; --steel-wash:#1A2A33;
     --add:#6DBE63; --add-wash:#1D2D1B;
     --del:#E0776A; --del-wash:#33201D;
-    --term-bg:#0F110D; --term-ink:#DDE0D6;
+    --term-bg:#0E0F12; --term-ink:#DCDFE6;
     --sh:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
   }
 }
 :root[data-theme="dark"]{
-  --ground:#161813; --panel:#1E211A; --panel-2:#282C23; --inset:#191C16;
-  --ink:#E7EAE2; --ink-2:#A2A899; --ink-3:#767C6D;
-  --rule:#343A2E; --rule-soft:#2A2F25;
-  --amber:#DFA43C; --amber-hi:#EFBB5C; --amber-wash:#3A2E17;
-  --steel:#78ADCB; --steel-wash:#1B2B34;
+  --ground:#141519; --panel:#1B1D22; --panel-2:#25272E; --inset:#17181C;
+  --ink:#E6E8EE; --ink-2:#A3A7B2; --ink-3:#7E8390;
+  --rule:#32353D; --rule-soft:#282A31;
+  --accent:#A898EC; --accent-wash:#25213A;
+  --accent-fill:#6652BE; --accent-fill-hi:#7461CB;
+  --steel:#78ADCB; --steel-wash:#1A2A33;
   --add:#6DBE63; --add-wash:#1D2D1B;
   --del:#E0776A; --del-wash:#33201D;
-  --term-bg:#0F110D; --term-ink:#DDE0D6;
+  --term-bg:#0E0F12; --term-ink:#DCDFE6;
   --sh:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
 }
 
@@ -79,9 +82,11 @@ p{margin:0 0 .95rem}
 a{color:var(--steel)}
 code,kbd{font-family:var(--f-mono);font-size:.86em}
 :where(p,li,td,th,.body) code{background:var(--panel-2);padding:.08em .36em;border-radius:3px;color:var(--ink)}
+/* a long address (the noreply email) breaks instead of pushing a phone screen sideways */
+:where(p,li) code{overflow-wrap:anywhere}
 kbd{background:var(--panel-2);border:1px solid var(--rule);border-bottom-width:2px;
   border-radius:3px;padding:.05em .35em;font-size:.8em}
-:focus-visible{outline:2.5px solid var(--amber);outline-offset:2px;border-radius:2px}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:2px}
 .tag{font-family:var(--f-tag);font-weight:700;text-transform:uppercase;
   letter-spacing:.14em;font-size:.7rem;color:var(--ink-3)}
 
@@ -90,10 +95,10 @@ kbd{background:var(--panel-2);border:1px solid var(--rule);border-bottom-width:2
   background:repeating-linear-gradient(135deg,transparent 0 11px,var(--rule-soft) 11px 12px)}
 .mast-in{background:var(--ground);padding:clamp(2.4rem,6vw,4rem) 0 clamp(1.4rem,3vw,2rem)}
 .mast h1{font-size:clamp(2.2rem,7vw,4.2rem);font-weight:800;letter-spacing:-.035em;margin:.45rem 0 .7rem}
-.mast h1 em{font-style:normal;color:var(--amber)}
+.mast h1 em{font-style:normal;color:var(--accent)}
 .mast .sub{font-size:clamp(1rem,2vw,1.18rem);color:var(--ink-2);max-width:58ch;margin-bottom:1.4rem}
-.p1{display:inline-flex;align-items:center;gap:.5rem;border:1.5px solid var(--amber);
-  color:var(--amber);font-family:var(--f-tag);font-weight:700;text-transform:uppercase;
+.p1{display:inline-flex;align-items:center;gap:.5rem;border:1.5px solid var(--accent);
+  color:var(--accent);font-family:var(--f-tag);font-weight:700;text-transform:uppercase;
   letter-spacing:.13em;font-size:.7rem;padding:.28rem .6rem;margin-bottom:.2rem}
 .p1 b{font-family:var(--f-mono);font-size:.78rem}
 
@@ -147,8 +152,8 @@ body.nav-open #sidebar{left:0}
   color:var(--ink-2);font-size:.87rem;padding:.4rem .9rem;
   border-left:2.5px solid transparent;line-height:1.35}
 .sb-nav a:hover{background:var(--panel-2);color:var(--ink)}
-.sb-nav a.on{color:var(--ink);border-left-color:var(--amber);background:var(--panel-2)}
-.sb-nav a b{font-family:var(--f-mono);font-size:.72rem;color:var(--amber);font-weight:600;
+.sb-nav a.on{color:var(--ink);border-left-color:var(--accent);background:var(--panel-2)}
+.sb-nav a b{font-family:var(--f-mono);font-size:.72rem;color:var(--accent);font-weight:600;
   flex:none;min-width:1.6em}
 .sb-nav a.ok b{color:var(--add)}
 .sb-nav a.ok b::after{content:"✓";margin-left:.1em}
@@ -157,7 +162,7 @@ body.nav-open #sidebar{left:0}
 .sb-foot .prog{flex:1;margin:0}
 /* Driven purely by the `hidden` attribute: no opacity fade. A frozen fade would
    leave an invisible sheet over the page swallowing every click. */
-#backdrop{position:fixed;inset:0;z-index:70;background:rgba(10,12,9,.55)}
+#backdrop{position:fixed;inset:0;z-index:70;background:rgba(9,10,13,.55)}
 @media(min-width:1100px){ body.nav-open #shell{padding-left:264px} }
 
 /* controls bar */
@@ -172,28 +177,26 @@ button{font-family:var(--f-tag);font-weight:700;text-transform:uppercase;letter-
   font-size:.72rem;cursor:pointer;border:1.5px solid var(--ink);background:transparent;
   color:var(--ink);padding:.45rem .75rem;transition:background .18s,color .18s,border-color .18s}
 button:hover{background:var(--ink);color:var(--ground)}
-button.pri{background:var(--amber);border-color:var(--amber);color:#fff}
-:root[data-theme="dark"] button.pri{color:#161813}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.pri{color:#161813}}
-button.pri:hover{background:var(--amber-hi);border-color:var(--amber-hi)}
+button.pri{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
+button.pri:hover{background:var(--accent-fill-hi);border-color:var(--accent-fill-hi)}
 button.gh{border-color:var(--rule);color:var(--ink-2);font-family:var(--f-mono);
   text-transform:none;letter-spacing:0;font-size:.75rem}
 button.gh:hover{background:var(--panel-2);color:var(--ink);border-color:var(--ink-3)}
 .prog{flex:1;min-width:150px;height:6px;background:var(--panel-2);border:1.5px solid var(--rule)}
-.prog i{display:block;height:100%;background:var(--amber);width:0;transition:width .4s}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
 .pct{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-2);min-width:8ch;
   font-variant-numeric:tabular-nums}
 
 /* resume banner */
-.resume{border:1.5px solid var(--amber);background:var(--amber-wash);padding:.8rem 1rem;
+.resume{border:1.5px solid var(--accent);background:var(--accent-wash);padding:.8rem 1rem;
   margin:1.2rem 0;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;font-size:.94rem}
 .resume b{font-family:var(--f-disp)}
 
 /* sections */
 section{padding:clamp(2.6rem,6vw,4rem) 0 0}
 .shead{display:flex;gap:.9rem;align-items:baseline;margin-bottom:.4rem}
-.snum{font-family:var(--f-mono);font-weight:600;font-size:.88rem;color:var(--amber);
-  border:1.5px solid var(--amber);padding:.08rem .42rem;flex:none}
+.snum{font-family:var(--f-mono);font-weight:600;font-size:.88rem;color:var(--accent);
+  border:1.5px solid var(--accent);padding:.08rem .42rem;flex:none}
 .lede{font-size:1.04rem;color:var(--ink-2);max-width:64ch;margin:.85rem 0 1.6rem}
 
 /* act */
@@ -205,8 +208,8 @@ section{padding:clamp(2.6rem,6vw,4rem) 0 0}
   color:var(--ink-3);font-size:1.25rem;flex:none}
 .act[open] > summary::after{content:"–"}
 .act > summary:hover{background:var(--panel-2)}
-.actn{font-family:var(--f-mono);font-size:.74rem;color:var(--amber);
-  border:1.5px solid var(--amber);padding:.06rem .38rem;flex:none}
+.actn{font-family:var(--f-mono);font-size:.74rem;color:var(--accent);
+  border:1.5px solid var(--accent);padding:.06rem .38rem;flex:none}
 .act.done .actn{color:var(--add);border-color:var(--add)}
 .act.done .actn::after{content:" ✓"}
 .mins{font-family:var(--f-tag);text-transform:uppercase;letter-spacing:.1em;
@@ -219,7 +222,7 @@ section{padding:clamp(2.6rem,6vw,4rem) 0 0}
 .step{display:flex;gap:.65rem;padding:.6rem 0;border-bottom:1px solid var(--rule-soft);
   align-items:flex-start}
 .step:last-child{border-bottom:0}
-.step > input{margin:.35rem 0 0;width:16px;height:16px;accent-color:var(--amber);flex:none;cursor:pointer}
+.step > input{margin:.35rem 0 0;width:16px;height:16px;accent-color:var(--accent);flex:none;cursor:pointer}
 .step .body{flex:1;min-width:0}
 .step.done .body{opacity:.5}
 .step.done .body > p:first-child{text-decoration:line-through;text-decoration-thickness:1px}
@@ -229,11 +232,11 @@ section{padding:clamp(2.6rem,6vw,4rem) 0 0}
 .cmd pre{margin:0;padding:.6rem 3.6rem .6rem .8rem;overflow-x:auto;
   font-family:var(--f-mono);font-size:.82rem;line-height:1.6;color:var(--term-ink)}
 .cmd pre .p{color:#6DBE63;user-select:none}
-.cmd pre .c{color:#767C6D}
-.cmd .cp{position:absolute;top:.4rem;right:.4rem;border:1px solid #3A4034;background:transparent;
-  color:#8A9180;font-family:var(--f-mono);font-size:.65rem;padding:.15rem .4rem;
+.cmd pre .c{color:#7E8390}
+.cmd .cp{position:absolute;top:.4rem;right:.4rem;border:1px solid #383B44;background:transparent;
+  color:#8C919D;font-family:var(--f-mono);font-size:.65rem;padding:.15rem .4rem;
   letter-spacing:0;text-transform:none}
-.cmd .cp:hover{background:var(--amber);border-color:var(--amber);color:#161813}
+.cmd .cp:hover{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .out{background:var(--inset);border:1.5px solid var(--rule-soft);border-left:3px solid var(--steel);
   padding:.5rem .75rem;margin:.5rem 0;font-family:var(--f-mono);font-size:.76rem;
   line-height:1.55;white-space:pre-wrap;color:var(--ink-2);overflow-x:auto}
@@ -251,10 +254,10 @@ section{padding:clamp(2.6rem,6vw,4rem) 0 0}
 .warn,.note,.tip{border-left:4px solid;padding:.8rem .95rem;margin:1.1rem 0;font-size:.93rem}
 .warn{border-color:var(--del);background:var(--del-wash)}
 .note{border-color:var(--steel);background:var(--steel-wash)}
-.tip{border-color:var(--amber);background:var(--amber-wash)}
+.tip{border-color:var(--accent);background:var(--accent-wash)}
 .warn .tag{color:var(--del);display:block;margin-bottom:.25rem}
 .note .tag{color:var(--steel);display:block;margin-bottom:.25rem}
-.tip .tag{color:var(--amber);display:block;margin-bottom:.25rem}
+.tip .tag{color:var(--accent);display:block;margin-bottom:.25rem}
 .warn p:last-child,.note p:last-child,.tip p:last-child{margin-bottom:0}
 
 /* panel */
@@ -269,8 +272,8 @@ section{padding:clamp(2.6rem,6vw,4rem) 0 0}
 @media(max-width:900px){.pipe{grid-template-columns:1fr;gap:.1rem}}
 .stage{background:var(--inset);border:1.5px solid var(--rule);padding:.7rem .65rem;
   display:flex;flex-direction:column;min-height:160px;transition:border-color .3s,background .3s}
-.stage.lit{border-color:var(--amber);background:var(--amber-wash)}
-.stage .idx{font-family:var(--f-mono);font-size:.66rem;color:var(--amber);font-weight:600}
+.stage.lit{border-color:var(--accent);background:var(--accent-wash)}
+.stage .idx{font-family:var(--f-mono);font-size:.66rem;color:var(--accent);font-weight:600}
 .stage h4{font-family:var(--f-tag);text-transform:uppercase;letter-spacing:.1em;
   font-size:.74rem;margin:.12rem 0 .1rem}
 .stage .what{font-size:.76rem;color:var(--ink-3);line-height:1.35;margin-bottom:.5rem}
@@ -283,8 +286,8 @@ section{padding:clamp(2.6rem,6vw,4rem) 0 0}
   transition:color .25s,background .25s}
 .conn .arw{font-size:1.05rem;color:var(--rule);line-height:1;transition:color .25s,transform .25s}
 @media(max-width:900px){.conn .arw{transform:rotate(90deg)}}
-.conn.flow .cm{color:var(--ground);background:var(--amber)}
-.conn.flow .arw{color:var(--amber);transform:scale(1.5)}
+.conn.flow .cm{color:#fff;background:var(--accent-fill)}
+.conn.flow .arw{color:var(--accent);transform:scale(1.5)}
 @media(max-width:900px){.conn.flow .arw{transform:rotate(90deg) scale(1.5)}}
 .tok{font-family:var(--f-mono);font-size:.72rem;font-weight:500;text-align:center;
   border:1.5px solid;padding:.42rem .45rem;width:100%;animation:pop .3s ease-out}
@@ -330,7 +333,7 @@ svg.hist text{font-family:var(--f-mono)}
   svg.hist .hnode,svg.hist .hlab,svg.hist .hnode circle,svg.hist .hedge{transition:none}}
 
 /* the practical */
-.taskcard{border:1.5px solid var(--amber);background:var(--amber-wash);padding:.8rem .95rem;
+.taskcard{border:1.5px solid var(--accent);background:var(--accent-wash);padding:.8rem .95rem;
   margin-bottom:.9rem}
 .taskcard.pass{border-color:var(--add);background:var(--add-wash)}
 .taskcard p{margin:0;font-size:.98rem}
@@ -345,17 +348,17 @@ svg.hist text{font-family:var(--f-mono)}
   line-height:1.55;padding:.8rem .9rem;height:265px;overflow-y:auto;margin-top:1rem;
   border:1.5px solid var(--rule)}
 .term .ln{white-space:pre-wrap;word-break:break-word}
-.term .u{color:#DFA43C} .term .g{color:#6DBE63} .term .r{color:#E0776A}
-.term .d{color:#767C6D} .term .b{color:#78ADCB}
+.term .u{color:#B4A7F2} .term .g{color:#6DBE63} .term .r{color:#E0776A}
+.term .d{color:#7E8390} .term .b{color:#78ADCB}
 .tin{display:flex;border:1.5px solid var(--rule);border-top:0;background:var(--term-bg)}
 .tin span{font-family:var(--f-mono);font-size:.79rem;color:#6DBE63;padding:.5rem .2rem .5rem .9rem}
 .tin input{flex:1;background:transparent;border:0;color:var(--term-ink);
   font-family:var(--f-mono);font-size:.79rem;padding:.5rem .9rem .5rem .3rem}
 .tin input:focus{outline:none}
-.tin input::placeholder{color:#5A6152}
+.tin input::placeholder{color:#777C89}
 .btnrow{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.9rem}
 .nextbar{display:flex;gap:.85rem;align-items:center;flex-wrap:wrap;margin-top:1rem;
-  border:1.5px solid var(--amber);background:var(--amber-wash);padding:.65rem .8rem}
+  border:1.5px solid var(--accent);background:var(--accent-wash);padding:.65rem .8rem}
 .nextbar button{flex:none}
 .nexttxt{display:flex;flex-direction:column;gap:.1rem;min-width:0}
 .nexttxt span{font-family:var(--f-tag);font-weight:700;text-transform:uppercase;
@@ -374,7 +377,7 @@ svg.graph{display:block;min-width:560px;width:100%;height:auto}
 .blabel{font-family:var(--f-tag);font-weight:700;font-size:11px;text-transform:uppercase;
   letter-spacing:.09em;transition:transform .85s cubic-bezier(.65,0,.35,1),opacity .5s}
 .shaflash{animation:flash 1s ease-out}
-@keyframes flash{0%,100%{fill:var(--ink-3)}30%{fill:var(--amber);font-weight:700}}
+@keyframes flash{0%,100%{fill:var(--ink-3)}30%{fill:var(--accent);font-weight:700}}
 .gexp{margin-top:1rem;padding:.75rem .95rem;background:var(--inset);
   border:1.5px solid var(--rule);font-size:.92rem}
 
@@ -382,8 +385,8 @@ svg.graph{display:block;min-width:560px;width:100%;height:auto}
 .cfx{background:var(--term-bg);color:var(--term-ink);font-family:var(--f-mono);font-size:.82rem;
   line-height:1.75;padding:.9rem;border:1.5px solid var(--rule);overflow-x:auto;margin:0}
 .cfx .mk{cursor:pointer;padding:.05rem .2rem;border-radius:2px;transition:background .2s}
-.cfx .mk:hover,.cfx .mk.on{background:var(--amber);color:#161813}
-.cfx .top{color:#78ADCB} .cfx .bot{color:#DFA43C} .cfx .mid{color:#767C6D}
+.cfx .mk:hover,.cfx .mk.on{background:var(--accent-fill);color:#fff}
+.cfx .top{color:#78ADCB} .cfx .bot{color:#B4A7F2} .cfx .mid{color:#7E8390}
 
 /* tables */
 .tbl{overflow-x:auto;margin:1.1rem 0}
@@ -408,7 +411,7 @@ tbody tr:hover{background:var(--panel)}
 .cpc{border:1px solid var(--rule);background:transparent;color:var(--ink-3);
   font-family:var(--f-mono);font-size:.63rem;padding:.12rem .32rem;letter-spacing:0;
   text-transform:none;flex:none}
-.cpc:hover{background:var(--amber);border-color:var(--amber);color:#fff}
+.cpc:hover{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
 .cmd-c.danger{border-color:var(--del)}
 .cmd-c.danger code{color:var(--del)}
 
@@ -416,14 +419,14 @@ tbody tr:hover{background:var(--panel)}
 .q{border:1.5px solid var(--rule);background:var(--panel);padding:.9rem;margin-bottom:.6rem}
 .q .qq{font-weight:600;font-family:var(--f-disp);font-size:.98rem;margin-bottom:.6rem;
   display:flex;gap:.55rem}
-.q .qq b{color:var(--amber);font-family:var(--f-mono);font-size:.83rem;flex:none}
+.q .qq b{color:var(--accent);font-family:var(--f-mono);font-size:.83rem;flex:none}
 .opt{display:block;width:100%;text-align:left;font-family:var(--f-body);text-transform:none;
   letter-spacing:0;font-size:.9rem;font-weight:400;padding:.45rem .65rem;margin-bottom:.3rem;
   border:1.5px solid var(--rule);color:var(--ink)}
 .opt:hover{background:var(--panel-2);color:var(--ink);border-color:var(--ink-3)}
 .opt.right{background:var(--add-wash);border-color:var(--add);color:var(--ink)}
 .opt.wrong{background:var(--del-wash);border-color:var(--del);color:var(--ink)}
-.qex{font-size:.88rem;color:var(--ink-2);border-left:3px solid var(--amber);
+.qex{font-size:.88rem;color:var(--ink-2);border-left:3px solid var(--accent);
   padding-left:.7rem;margin-top:.55rem}
 
 footer{margin-top:3.5rem;border-top:2px solid var(--ink);padding-top:1.1rem;
@@ -432,6 +435,38 @@ footer{margin-top:3.5rem;border-top:2px solid var(--ink);padding-top:1.1rem;
 [hidden]{display:none!important}
 img{max-width:100%}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* native controls (checkboxes, scrollbars) follow the theme picked, not the computer's */
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
+
+/* ---------- badges ---------- */
+.badgecount{font-family:var(--f-mono);font-size:.88rem;color:var(--ink-2);margin:.2rem 0 0}
+.badgegrid{list-style:none;padding:0;margin:.9rem 0 1rem;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:.55rem}
+.badgegrid li{border:1.5px dashed var(--rule);padding:.6rem .75rem;color:var(--ink-3);
+  font-size:.86rem;line-height:1.45}
+.badgegrid li b{display:block;font-family:var(--f-mono);font-size:.82rem;font-weight:600;
+  color:var(--ink-2);margin-bottom:.15rem}
+.badgegrid li.got{border-style:solid;border-color:var(--accent);background:var(--accent-wash);color:var(--ink-2)}
+.badgegrid li.got b{color:var(--accent)}
+.badgegrid code{white-space:nowrap}
+.sharetext{font-family:var(--f-mono);font-size:.8rem;color:var(--ink-2);user-select:all;
+  border:1.5px solid var(--rule);background:var(--inset);padding:.55rem .7rem;margin-top:.6rem;
+  overflow-wrap:anywhere}
+.badgetoast{position:fixed;right:1rem;bottom:1rem;z-index:90;display:grid;gap:.2rem;
+  width:min(22rem,calc(100vw - 2rem));padding:.75rem 2.6rem .8rem .95rem;
+  border:1.5px solid var(--accent);background:var(--panel);box-shadow:var(--sh);
+  font-size:.9rem;line-height:1.45;animation:badgeIn .25s ease-out}
+.badgetoast[hidden]{display:none}
+.badgetoast .tag{color:var(--accent)}
+.badgetoast b{font-family:var(--f-mono);font-size:.9rem}
+.badgetoast a{font-size:.84rem}
+.badgetoast button{position:absolute;top:.35rem;right:.35rem;border:0;padding:.15rem .5rem;
+  font-size:1rem;letter-spacing:0;color:var(--ink-3)}
+.badgetoast button:hover{background:var(--panel-2);color:var(--ink)}
+@keyframes badgeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.badgetoast{animation:none}}
 </style>
 </head>
 <body>
@@ -459,10 +494,10 @@ img{max-width:100%}
   </button>
   <a href="#top" id="homeBtn" aria-label="Back to the top of the page">
     <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <rect width="32" height="32" rx="7" fill="#161813"/>
-      <path d="M10 24V16a6 6 0 0 1 6-6h5" fill="none" stroke="#DFA43C"
+      <rect width="32" height="32" rx="7" fill="#141519"/>
+      <path d="M10 24V16a6 6 0 0 1 6-6h5" fill="none" stroke="#A898EC"
             stroke-width="2.25" stroke-linecap="round"/>
-      <circle cx="10" cy="24" r="3.6" fill="#DFA43C"/>
+      <circle cx="10" cy="24" r="3.6" fill="#A898EC"/>
       <circle cx="21" cy="10" r="3.6" fill="#78ADCB"/>
     </svg>
     <span>Git From Zero</span>
@@ -527,9 +562,10 @@ img{max-width:100%}
       <button type="button" id="loadCode">Restore from a code</button>
       <button type="button" id="clearAll">Reset everything</button>
     </div>
-    <p style="font-size:.82rem;color:var(--ink-3);margin-top:.6rem">A progress code is a short
-    string you can paste into this page on another computer. There's no account and no server:
-    nothing you do here leaves your browser.</p>
+    <p style="font-size:.82rem;color:var(--ink-3);margin-top:.6rem">A progress code is one line
+    of text that carries your ticks, quiz answers, practical record and badges. Paste it into this
+    page on another computer. There's no account and no server: nothing you do here leaves your
+    browser.</p>
   </section>
 
   <!-- ===== SIMULATOR ===== -->
@@ -758,11 +794,13 @@ img{max-width:100%}
         <tr><td><code>Please tell me who you are</code></td><td>You skipped the name/email setup</td><td>The two <code>git config --global</code> lines in Step 01</td></tr>
         <tr><td><code>The current branch has no upstream branch</code></td><td>First push of a brand new branch</td><td><strong>Read the message</strong>: it prints the exact command. Run that</td></tr>
         <tr><td><code>Updates were rejected... remote contains work you do not have</code></td><td>GitHub has commits you don't (you edited on the website)</td><td><code>git pull</code>, fix any conflict, then push</td></tr>
+        <tr><td><code>fatal: Need to specify how to reconcile divergent branches</code></td><td>Your laptop and GitHub both have commits the other lacks, and Git won't guess how to combine them</td><td><code>git pull --no-rebase</code> merges them. <code>git config --global pull.rebase false</code> makes that the default</td></tr>
+        <tr><td><code>fatal: Not possible to fast-forward, aborting</code></td><td>The same thing, on a Git set to only ever fast-forward</td><td><code>git pull --no-rebase</code> still merges</td></tr>
         <tr><td><code>refusing to merge unrelated histories</code></td><td>You made the GitHub repo <em>with</em> a README, so it has its own history</td><td><code>git pull origin main --allow-unrelated-histories</code></td></tr>
         <tr><td><code>failed to push some refs</code> after a rebase</td><td>Expected: the commit IDs changed</td><td><code>git push --force-with-lease</code></td></tr>
         <tr><td>A text editor opened and you're stuck</td><td>Git wants a commit message</td><td>Type it, <strong>save</strong>, close the tab/window. In Vim: <kbd>Esc</kbd> then <code>:wq</code> then <kbd>Enter</kbd></td></tr>
-        <tr><td><code>Support for password authentication was removed</code></td><td>Passwords stopped working in 2021</td><td>Let the browser sign-in window do it, or use a personal access token</td></tr>
-        <tr><td><code>Permission denied</code> on push</td><td>Signed in as the wrong account</td><td>Check the repo is yours, and which account your credential manager saved</td></tr>
+        <tr><td><code>Support for password authentication was removed</code></td><td>Passwords stopped working in 2021</td><td>On Windows, let the browser window sign you in. On a Mac or Linux, run <code>gh auth login</code>, or paste a personal access token where it asks for the password (Step 04)</td></tr>
+        <tr><td><code>Permission denied</code> on push</td><td>Signed in as the wrong account</td><td>Check the repo is yours, and which account your computer saved. If you signed in with <code>gh</code>, <code>gh auth status</code> tells you</td></tr>
         <tr><td>Everything is on fire</td><td>-</td><td><code>git merge --abort</code> / <code>git rebase --abort</code>, or see <code>git reflog</code> in Step 08</td></tr>
       </tbody>
     </table></div>
@@ -830,6 +868,7 @@ img{max-width:100%}
       </div>
       <p class="hint">Stuck on the command itself? <a href="#ref">Every Command</a> has the lot, and
       looking it up is a legitimate way to work, not cheating.</p>
+      <p class="hint" id="xrec" hidden></p>
     </div>
   </section>
 
@@ -858,6 +897,17 @@ img{max-width:100%}
     </div>
   </section>
 
+  <!-- ===== BADGES ===== -->
+  <section id="badges">
+    <div class="shead"><span class="snum">10</span><h2>Badges</h2></div>
+    <p class="lede">These mean absolutely nothing. Collect them anyway. Most are for trying, being
+    wrong and coming back, because getting stuck is most of learning Git.</p>
+    <p class="badgecount" id="badgecount"></p>
+    <ul class="badgegrid" id="badgegrid"></ul>
+    <div class="btnrow"><button type="button" id="badgeShare">Copy a line to share</button></div>
+    <p class="sharetext" id="sharetext" hidden></p>
+  </section>
+
   <footer>
     <div style="max-width:68ch">
       <p><strong>Git From Zero</strong>: a solo walkthrough. No account, no server, no tracking.
@@ -865,10 +915,18 @@ img{max-width:100%}
       <p style="margin-top:.5rem">Command output was captured from a real repository rather than
       written from memory, including the conflict markers, whose sides really do swap between a
       merge and a rebase. Install instructions verified against
-      <a href="https://git-scm.com/install/">git-scm.com/install</a> (Git 2.55.0).</p>
+      <a href="https://git-scm.com/install/">git-scm.com/install</a> (Git 2.56.1).</p>
     </div>
   </footer>
 </main>
+
+<div class="badgetoast" id="badgetoast" role="status" aria-live="polite" hidden>
+  <span class="tag">Badge earned</span>
+  <b id="bt-name"></b>
+  <span id="bt-joke"></span>
+  <a href="#badges" id="bt-link">See every badge</a>
+  <button type="button" id="bt-close" aria-label="Close">×</button>
+</div>
 
 </div><!-- /#shell -->
 
@@ -885,6 +943,149 @@ var STORE=(function(){
   };
 })();
 if(!STORE.ok){var ns=document.getElementById('nostore');if(ns)ns.classList.remove('hide');}
+/* everything "Reset everything" clears. Theme, OS and the menu are settings, not progress. */
+var PROGRESS_KEYS=['gfz-ticks','gfz-last','gfz-quiz','gfz-exam-run','gfz-exam-rec','gfz-badges'];
+function readJSON(k,d){ try{ var v=JSON.parse(STORE.get(k,'null')); return v===null?d:v; }catch(e){ return d; } }
+function today(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function niceDate(iso){
+  var m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(iso||''); if(!m) return iso;
+  return (+m[3])+' '+['January','February','March','April','May','June','July','August','September','October','November','December'][+m[2]-1]+' '+m[1];
+}
+
+/* ===================== badges =====================
+   They mean absolutely nothing, on purpose. Wayne, 2026-11-11: "silly serious dev badges that
+   mean absolutely nothing, but are just fun, to try show even those that will obv get stuck".
+   So most of them reward trying, being wrong and coming back, not finishing. Everything is
+   worked out in this browser, like the rest of the page: nothing is sent anywhere.
+   gfz-badges = {f: earned, d: days the page was opened (last ten), s: already announced}.
+   With no "s" (a first visit, or just restored from a code) whatever is earned while the page
+   loads is taken in quietly; after that, each new badge gets one note on screen. */
+var BADGES=(function(){
+  var LIST=[
+    {id:'init',      name:'Initial Commit',              joke:'You ticked your first step. Most people only bookmark.',                      how:'Tick any step in the walkthrough.'},
+    {id:'local',     name:'Works On My Machine',         joke:'A real repository on your computer, with history in it. Ship it.',            how:'Finish Step 02.'},
+    {id:'cloud',     name:'It\'s In The Cloud Now',      joke:'Your work is on GitHub. Someone else\'s computer, officially.',               how:'Finish Step 04.'},
+    {id:'survivor',  name:'Merge Conflict Survivor',     joke:'Two versions, three markers, one decision. You made it.',                     how:'Finish Step 07, or fix a conflict in a sandbox.'},
+    {id:'uptodate',  name:'Up To Date With origin/main', joke:'Every step ticked. Nothing to pull, nothing to push.',                         how:'Tick every step.'},
+    {id:'abort',     name:'Abort Mission',               joke:'You backed out of a merge on purpose. Knowing when to quit is a skill.',      how:'Back out of a conflict with <code>--abort</code> in a sandbox.'},
+    {id:'readerror', name:'Read The Error',              joke:'Git told you the fix and you typed it. Rarer than it should be.',             how:'Push a branch with no upstream, then run the command the error gives you.'},
+    {id:'reflog',    name:'Reflog Archaeologist',        joke:'Dug a "destroyed" commit back up. Nothing committed is ever really gone.',    how:'Bring back a commit that <code>git reset --hard</code> threw away.'},
+    {id:'hoarder',   name:'Stash Hoarder',               joke:'Three stashes deep. You will never pop them all.',                            how:'Have three stashes at once.'},
+    {id:'lease',     name:'Force Pusher (Reformed)',     joke:'You forced it, but you checked first. Like a grown-up.',                      how:'Push with <code>--force-with-lease</code> after a rebase.'},
+    {id:'rewriter',  name:'History Rewriter',            joke:'Rebased. New commit ids, same work. Historians hate this one trick.',         how:'Rebase a branch in a sandbox.'},
+    {id:'secret',    name:'Secret Keeper',               joke:'The .env stayed out. Somebody\'s API key thanks you.',                        how:'Add a <code>.gitignore</code> in the sandbox.'},
+    {id:'amend',     name:'Nobody Saw That',             joke:'Rewrote your last commit before anyone noticed. Smooth.',                     how:'Fix your last commit with <code>--amend</code>.'},
+    {id:'useful',    name:'The Useful Outcome',          joke:'Wrong, and you read why. That is the whole point of the quiz.',               how:'Get a quiz question wrong.'},
+    {id:'clean',     name:'Working Tree Clean',          joke:'7 / 7. Nothing to commit, working tree clean.',                              how:'Get all seven quiz questions right.'},
+    {id:'help',      name:'git help',                    joke:'You asked for a hint. Senior developers do this all day.',                    how:'Show a hint in the practical.'},
+    {id:'eleven',    name:'11/11',                       joke:'Eleven tasks, no commands given, all passed. That is the job.',               how:'Pass every task in the practical.'},
+    {id:'returning', name:'Returning Contributor',       joke:'Back on three different days. That is how it sticks.',                       how:'Come back on three different days.'},
+    {id:'latenight', name:'Late Night Commit',           joke:'A step ticked between midnight and 5am. Go to bed.',                          how:'Tick a step in the small hours.'}
+  ];
+  var KEY='gfz-badges', st=readJSON(KEY,{})||{};
+  var flags=(st.f&&typeof st.f==='object')?st.f:{}, days=Array.isArray(st.d)?st.d:[];
+  var quiet=!st.s, seen=st.s||{}, loading=true, queue=[], showing=false, timer=null, sawUpstream=false;
+
+  function esc(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function byId(id){ return LIST.filter(function(b){ return b.id===id; })[0]; }
+  function save(){ STORE.set(KEY,JSON.stringify({f:flags,d:days,s:seen})); }
+  function give(id){
+    if(!byId(id)||flags[id]) return;
+    flags[id]=1;
+    if(!(loading&&quiet)&&!seen[id]) queue.push(id);
+    seen[id]=1;
+    save(); paint(); next();
+  }
+  function next(){
+    if(showing||loading||!queue.length) return;
+    var b=byId(queue.shift()), el=document.getElementById('badgetoast');
+    if(!b||!el) return;
+    document.getElementById('bt-name').textContent=b.name;
+    document.getElementById('bt-joke').textContent=b.joke;
+    el.hidden=false; showing=true;
+    clearTimeout(timer); timer=setTimeout(close,6000);
+  }
+  function close(){
+    var el=document.getElementById('badgetoast'); if(el) el.hidden=true;
+    showing=false; clearTimeout(timer); setTimeout(next,350);
+  }
+  function paint(){
+    var grid=document.getElementById('badgegrid'); if(!grid) return;
+    var n=0;
+    grid.innerHTML=LIST.map(function(b){
+      var got=!!flags[b.id]; if(got) n++;
+      return '<li class="'+(got?'got':'')+'"><b>'+esc(b.name)+'</b><span>'+(got?esc(b.joke):b.how)+'</span></li>';
+    }).join('');
+    document.getElementById('badgecount').textContent=n+' of '+LIST.length+' earned';
+  }
+  function shareText(){
+    var mine=LIST.filter(function(b){ return flags[b.id]; }).map(function(b){ return b.name; });
+    var url=(document.querySelector('link[rel=canonical]')||{}).href||location.href;
+    return mine.length
+      ? 'I have '+mine.length+' of '+LIST.length+' badges on Git From Zero, a free Git course, including '+mine.slice(-3).join(', ')+'. They mean nothing. I am collecting them anyway. '+url
+      : 'I am learning Git from zero with a free course that lets you break things on purpose. '+url;
+  }
+
+  var close_=document.getElementById('bt-close'); if(close_) close_.onclick=close;
+  var link=document.getElementById('bt-link'); if(link) link.addEventListener('click',close);
+  var shareBtn=document.getElementById('badgeShare');
+  if(shareBtn) shareBtn.onclick=function(){
+    var t=shareText(), box=document.getElementById('sharetext');
+    box.textContent=t; box.hidden=false;
+    copy(t,shareBtn,'Copied. Paste it anywhere.');
+  };
+
+  var d=today();
+  if(days.indexOf(d)===-1){ days.push(d); days=days.slice(-10); save(); }
+  if(days.length>=3) give('returning');
+  paint();
+
+  function actDone(state,n){
+    var a=ACTS.filter(function(x){ return x.n===n; })[0]; if(!a) return false;
+    for(var i=0;i<a.steps.length;i++) if(!state[n+'-'+i]) return false;
+    return true;
+  }
+  return {
+    list:LIST,
+    flag:give,
+    ticks:function(state){
+      var any=false; for(var k in state) if(state[k]){ any=true; break; }
+      if(any) give('init');
+      if(actDone(state,'02')) give('local');
+      if(actDone(state,'04')) give('cloud');
+      if(actDone(state,'07')) give('survivor');
+      if(ACTS.every(function(a){ return actDone(state,a.n); })) give('uptodate');
+    },
+    ticked:function(){ if(new Date().getHours()<5) give('latenight'); },
+    quiz:function(scored,total){
+      var right=0, wrong=false;
+      for(var k in scored){ if(scored[k]) right++; else wrong=true; }
+      if(wrong) give('useful');
+      if(right===total) give('clean');
+    },
+    exam:function(rec){ if(rec&&rec.all) give('eleven'); },
+    hint:function(){ give('help'); },
+    /* after every command typed into either sandbox, with the repository before and after */
+    ran:function(c,before,after,r){
+      if(!r||!before||!after) return;
+      var ok=!!r.ok, text=(r.lines||[]).map(function(l){ return l.t; }).join('\n');
+      if(/^git push\b/.test(c)){
+        if(/has no upstream branch/.test(text)) sawUpstream=true;
+        else if(ok&&sawUpstream&&/(\s-u\b|--set-upstream)/.test(c)) give('readerror');
+        if(ok&&/--force-with-lease/.test(c)) give('lease');
+      }
+      if(/^git (merge|rebase) --abort$/.test(c)&&ok&&before.merging) give('abort');
+      if(/^git commit\b/.test(c)&&ok&&before.merging&&!after.merging) give('survivor');
+      if(/^git commit\b.*--amend/.test(c)&&ok) give('amend');
+      if(/^git rebase\b/.test(c)&&ok&&/ became /.test(text)) give('rewriter');
+      if(after.stashes>=3) give('hoarder');
+      if(/^git reset\b.*--hard/.test(c)&&ok&&after.lastSha!==before.lastSha&&
+         before.graph.nodes.some(function(n){ return n.sha===after.lastSha&&n.kind==='orphan'; })) give('reflog');
+    },
+    /* the end of the page's script: from here on, a new badge is announced */
+    ready:function(){ loading=false; if(quiet){ quiet=false; save(); } next(); }
+  };
+})();
 
 /* ===================== theme ===================== */
 (function(){
@@ -943,6 +1144,20 @@ function out(label,txt){
   return '<div class="out"><span class="expect">'+label+'</span>'+txt+'</div>';
 }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* Step 04's sign-in on a Mac or Linux. There is no browser popup there: the terminal asks
+   for a password, and a GitHub password stopped working in 2021. */
+function signIn(os){
+  var mac=os==='mac';
+  return '<p>The terminal asks for a username, then a password. <strong>Your GitHub password will not work here</strong>: GitHub switched that off in 2021. Press <kbd>Ctrl</kbd>+<kbd>C</kbd> to stop, and let GitHub\'s own tool sign you in instead.</p>'+
+    (mac ? cmd('brew install gh','No Homebrew? Get the installer from <a href="https://cli.github.com" target="_blank" rel="noopener">cli.github.com</a>.')
+         : cmd('# Debian, Ubuntu, Mint\nsudo apt install gh')+
+           cmd('# Fedora\nsudo dnf install gh','If either says it can\'t find <code>gh</code>, <a href="https://cli.github.com" target="_blank" rel="noopener">cli.github.com</a> shows the other ways in.'))+
+    cmd('gh auth login')+
+    '<p style="margin-top:.5rem">It asks four questions. Answer <strong>GitHub.com</strong>, <strong>HTTPS</strong>, <strong>Yes</strong> (sign Git in too) and <strong>Login with a web browser</strong>. It shows a one-time code: press <kbd>Enter</kbd>, paste the code into the page that opens, and approve. Then push again:</p>'+
+    cmd('git push -u origin main')+
+    '<div class="note"><span class="tag">Or use a token</span><p>On GitHub: <strong>Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic)</strong>. Tick <code>repo</code>, generate it and copy it. When the terminal asks for your password, paste the token. '+
+    (mac ? 'Your Mac remembers it after the first time.' : 'Git asks for it again on every push. <code>gh auth login</code> doesn\'t.')+'</p></div>';
+}
 
 var ACTS=[
  {n:'00',t:'Open a terminal',m:'5 min',nav:'Terminal',
@@ -980,16 +1195,17 @@ var ACTS=[
       '</div>'},
    {b:'<p><strong>Confirm it worked.</strong> Same command as before, in a <em>fresh</em> terminal.</p>'+
       cmd('git --version')+
-      out('you should see something like','git version 2.55.0')},
+      out('you should see something like','git version 2.56.1')},
    {b:'<p><strong>Tell Git who you are.</strong> This goes on every commit you ever make, forever, and it is public if your repo is public.</p>'+
       cmd('git config --global user.name "Your Name"\ngit config --global user.email "you@example.com"')+
       '<div class="tip"><span class="tag">Keep your real email private</span><p>Once you have a GitHub account, go to <strong>Settings → Emails</strong> and tick <em>Keep my email address private</em>. GitHub gives you an address like <code>12345678+you@users.noreply.github.com</code>. Use that one here instead. Otherwise your personal email ends up permanently in public commit history.</p></div>'},
-   {b:'<p><strong>Set the starting branch name to <code>main</code>.</strong> Do not skip this.</p>'+
-      cmd('git config --global init.defaultBranch main')+
-      '<div class="warn"><span class="tag">Why this one matters</span><p>Without it, Git names your first branch <code>master</code> while GitHub expects <code>main</code>. Everything looks fine until your first upload fails with a confusing error. <strong>This exact mistake broke the first version of this very page.</strong></p></div>'},
+   {b:'<p><strong>Set two defaults.</strong> Do not skip these.</p>'+
+      cmd('git config --global init.defaultBranch main\ngit config --global pull.rebase false')+
+      '<div class="warn"><span class="tag">Why these matter</span><p>Without the first, Git names your first branch <code>master</code> while GitHub expects <code>main</code>. Everything looks fine until your first upload fails with a confusing error. <strong>This exact mistake broke the first version of this very page.</strong></p><p style="margin-top:.4rem">The second tells <code>git pull</code> what to do when your laptop and GitHub have both moved on: merge them. Without it, newer versions of Git stop and ask you, and Step 07 is where that happens.</p></div>'},
    {b:'<p><strong>Check it all stuck.</strong></p>'+
       cmd('git config --global --list')+
-      out('you should see your three settings','user.name=Your Name\nuser.email=you@example.com\ninit.defaultBranch=main')}]},
+      out('you should see these four, maybe among others','user.name=Your Name\nuser.email=you@example.com\ninit.defaultbranch=main\npull.rebase=false')+
+      '<p style="margin-top:.5rem">Git prints the names in small letters, so <code>defaultBranch</code> shows as <code>defaultbranch</code>. Same setting.</p>'}]},
 
  {n:'02',t:'Make your first repository',m:'15 min',nav:'First repo',
   goal:'Create a project, save your first version, and see the four places for real. <strong>No internet involved yet</strong>: Git works completely offline, and separating that from GitHub is the thing that makes it click.',
@@ -1022,7 +1238,7 @@ var ACTS=[
    {b:'<p><strong>Look at your history.</strong></p>'+
       cmd('git log --oneline')+
       out('you should see','d191e37 (HEAD -> main) Add my notes file')+
-      '<p style="margin-top:.5rem">That <code>d191e37</code> is the commit\'s ID. It comes back in Step 06 and it\'s the key to understanding rebase.</p>'}]},
+      '<p style="margin-top:.5rem">That <code>d191e37</code> is the commit\'s ID. It comes back in <a href="#graph">Merge vs Rebase</a>, and it\'s the key to understanding rebase.</p>'}]},
 
  {n:'03',t:'The everyday loop',m:'10 min',nav:'The loop',
   goal:'This is 90% of using Git for the rest of your life: change something, look at what changed, save it. Everything else is occasional.',
@@ -1054,8 +1270,13 @@ var ACTS=[
    {b:'<p><strong>Connect your folder to it.</strong> GitHub shows you these two lines. Use yours, with your username:</p>'+
       cmd('git remote add origin https://github.com/YOUR-NAME/git-practice.git\ngit push -u origin main')+
       '<p style="margin-top:.5rem"><code>origin</code> is just a nickname for that URL. <code>-u</code> links your local <code>main</code> to the one on GitHub, which is why from now on you can type plain <code>git push</code>.</p>'},
-   {b:'<p><strong>Sign in when it asks.</strong> A browser window will open by itself the first time.</p>'+
-      '<div class="note"><span class="tag">That popup is expected</span><p>It is not an error and you have not done anything wrong. Your computer is asking GitHub to confirm it\'s really you. <strong>Your GitHub password will not work in the terminal</strong>: that was removed in 2021, which is exactly why the browser window exists.</p></div>'},
+   {b:'<p><strong>Sign in when it asks.</strong></p>'+
+      '<div class="osb">'+
+      '<div data-os="win"><p>A browser window opens by itself the first time.</p>'+
+      '<div class="note"><span class="tag">That popup is expected</span><p>It is not an error and you have not done anything wrong. Your computer is asking GitHub to confirm it\'s really you. <strong>Your GitHub password will not work in the terminal</strong>: that was removed in 2021, which is exactly why the browser window exists.</p></div></div>'+
+      '<div data-os="mac">'+signIn('mac')+'</div>'+
+      '<div data-os="linux">'+signIn('linux')+'</div>'+
+      '</div>'},
    {b:'<p><strong>Refresh the GitHub page.</strong> Your file is there, with your commit message and history. Now prove the round trip works:</p>'+
       cmd('# edit notes.txt again, then:\ngit add notes.txt\ngit commit -m "Try out pushing"\ngit push')+
       '<p style="margin-top:.4rem">Refresh GitHub. That is the full loop: <strong>edit → add → commit → push</strong>.</p>'}]},
@@ -1112,7 +1333,10 @@ var ACTS=[
       '<p style="margin-top:.4rem">Git is protecting you. GitHub has work you don\'t have, and pushing would erase it.</p>'},
    {b:'<p><strong>Pull, and get your conflict.</strong></p>'+
       cmd('git pull')+
-      out('you should see','Auto-merging notes.txt\nCONFLICT (content): Merge conflict in notes.txt\nAutomatic merge failed; fix conflicts and then commit the result.')},
+      out('you should see','Auto-merging notes.txt\nCONFLICT (content): Merge conflict in notes.txt\nAutomatic merge failed; fix conflicts and then commit the result.')+
+      '<div class="note"><span class="tag">If it says "fatal" instead</span><p>If Git stops with <code>fatal: Need to specify how to reconcile divergent branches</code> or <code>fatal: Not possible to fast-forward, aborting</code>, it wants to be told how to combine the two sides. Tell it to merge:</p>'+
+      cmd('git pull --no-rebase')+
+      '<p style="margin-top:.4rem">Step 01\'s <code>pull.rebase false</code> makes that the default on most machines. Some installs are set to refuse anyway, and this works on all of them.</p></div>'},
    {b:'<p><strong>Open the file.</strong> Git has written both versions into it:</p>'+
       '<pre class="cfx" style="font-size:.78rem"><span class="top">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>\n  the line as you typed it on your laptop\n<span class="mid">=======</span>\n  the line as you typed it on the website\n<span class="bot">&gt;&gt;&gt;&gt;&gt;&gt;&gt; a1b2c3d (Update notes.txt)</span></pre>'+
       '<p style="margin-top:.5rem">See <a href="#conflict">Reading a Conflict</a> for what each marker means.</p>'},
@@ -1121,9 +1345,9 @@ var ACTS=[
       cmd('git add notes.txt\ngit commit\ngit push')+
       '<p style="margin-top:.4rem">Your editor may open with a pre-written merge message. Just save and close it.</p>'+
       '<div class="tip"><span class="tag">Do it by hand this once</span><p>VS Code shows tidy "Accept Current / Accept Incoming / Accept Both" buttons and they work well. Do it manually the first time anyway, so you know exactly what those buttons are doing to your file.</p></div>'},
-   {b:'<p><strong>The escape hatch.</strong> Practise it now, calmly, while nothing is actually wrong:</p>'+
+   {b:'<p><strong>The escape hatch, for next time.</strong> In the middle of a conflict, before you commit, this backs out of the whole merge:</p>'+
       cmd('git merge --abort')+
-      '<p style="margin-top:.4rem">That puts everything back exactly as it was before the pull, as if you never started. There is almost always a way back.</p>'}]},
+      '<p style="margin-top:.4rem">It puts everything back exactly as it was before the pull, as if you never started. Don\'t run it now: you just finished this merge, so Git would only say <code>fatal: There is no merge to abort (MERGE_HEAD missing).</code> Keep it for your next conflict, or cause one in <a href="#places">the sandbox</a> and back out of it there. There is almost always a way back.</p>'}]},
 
  {n:'08',t:'Undo anything',m:'15 min',nav:'Undo',
   goal:'The safety net. Knowing these is the difference between being nervous around Git and being relaxed about it.',
@@ -1163,6 +1387,86 @@ var ACTS=[
       '<div class="tip"><span class="tag">Why this one matters</span><p>Everything before this was practice you would throw away. This is the first thing you have made with Git that you will actually keep, and every future edit to it uses exactly the four commands you already know.</p><p style="margin-top:.4rem"><strong>The habit that makes it stick:</strong> put your next project in a repo on day one, however small. Everything on this page becomes automatic in a fortnight of ordinary use, and evaporates in a month of none.</p></div>'}]}
 ];
 
+/* ==PROGRESS-CODE-START==
+   A progress code is base64 of a small JSON object. Pure functions: test.js runs them.
+   v2: {v:2, t:'0110' one character per step in ACTS order (trailing zeros dropped),
+        q:'1-2' the option picked for each quiz question ('-' for not answered),
+        x:{b:best practical score, a:'date of the first full pass'},
+        f:[badge ids], d:['YYYY-MM-DD' days the page was used, last ten]}
+   v1, before 2026-11-11, was the ticks map itself: {"01-0":true}. Still accepted.
+   A code that decodes to anything else, a list included, is refused. */
+function encodeProgress(p, ids){
+  var o={v:2, t:ids.map(function(id){ return p.ticks&&p.ticks[id]?'1':'0'; }).join('').replace(/0+$/,'')};
+  var quiz=p.quiz||{}, q=[];
+  Object.keys(quiz).forEach(function(k){
+    if(/^\d+$/.test(k)&&/^\d$/.test(String(quiz[k]))) q[+k]=String(quiz[k]);
+  });
+  var qs=''; for(var i=0;i<q.length;i++) qs+=(q[i]===undefined?'-':q[i]);
+  if(qs) o.q=qs;
+  if(p.rec&&p.rec.best){ o.x={b:p.rec.best}; if(p.rec.all) o.x.a=p.rec.all; }
+  var f=Object.keys(p.flags||{}).filter(function(k){ return p.flags[k]; }).sort();
+  if(f.length) o.f=f;
+  if(p.days&&p.days.length) o.d=p.days.slice(-10);
+  return btoa(JSON.stringify(o)).replace(/=+$/,'');
+}
+function decodeProgress(code, ids){
+  var o;
+  try{ o=JSON.parse(atob(String(code||'').replace(/\s+/g,''))); }catch(e){ return null; }
+  if(!o||typeof o!=='object'||Array.isArray(o)) return null;
+  var out={ticks:{}, quiz:{}, rec:null, flags:{}, days:[]}, i;
+  if(o.v===2){
+    if(typeof o.t!=='string'||!/^[01]*$/.test(o.t)) return null;
+    for(i=0;i<o.t.length&&i<ids.length;i++) if(o.t[i]==='1') out.ticks[ids[i]]=true;
+    if(o.q!==undefined){
+      if(typeof o.q!=='string'||!/^[0-9-]*$/.test(o.q)) return null;
+      for(i=0;i<o.q.length;i++) if(o.q[i]!=='-') out.quiz[i]=+o.q[i];
+    }
+    if(o.x!==undefined){
+      if(!o.x||typeof o.x!=='object'||Array.isArray(o.x)) return null;
+      var b=o.x.b;
+      if(typeof b!=='number'||b<0||b>99||Math.floor(b)!==b) return null;
+      out.rec={best:b};
+      if(typeof o.x.a==='string'&&/^\d{4}-\d\d-\d\d$/.test(o.x.a)) out.rec.all=o.x.a;
+    }
+    if(o.f!==undefined){
+      if(!Array.isArray(o.f)) return null;
+      o.f.forEach(function(k){ if(typeof k==='string'&&/^[a-z0-9-]{1,24}$/.test(k)) out.flags[k]=true; });
+    }
+    if(o.d!==undefined){
+      if(!Array.isArray(o.d)) return null;
+      out.days=o.d.filter(function(d){ return typeof d==='string'&&/^\d{4}-\d\d-\d\d$/.test(d); }).slice(-10);
+    }
+    return out;
+  }
+  if(o.v!==undefined) return null;
+  var keys=Object.keys(o);
+  for(i=0;i<keys.length;i++){
+    if(!/^\d\d-\d+$/.test(keys[i])) return null;
+    if(o[keys[i]]&&ids.indexOf(keys[i])>-1) out.ticks[keys[i]]=true;
+  }
+  return out;
+}
+/* ==PROGRESS-CODE-END== */
+function stepIds(){
+  var ids=[];
+  ACTS.forEach(function(a){ a.steps.forEach(function(st,i){ ids.push(a.n+'-'+i); }); });
+  return ids;
+}
+function readProgress(){
+  var b=readJSON('gfz-badges',{})||{};
+  return {ticks:readJSON('gfz-ticks',{}), quiz:readJSON('gfz-quiz',{}), rec:readJSON('gfz-exam-rec',null),
+          flags:b.f||{}, days:b.d||[]};
+}
+/* A restore replaces progress. Badges come back without "seen", so the page takes them in
+   quietly on the reload instead of announcing every one of them. */
+function writeProgress(p){
+  STORE.set('gfz-ticks',JSON.stringify(p.ticks));
+  STORE.set('gfz-quiz',JSON.stringify(p.quiz));
+  if(p.rec) STORE.set('gfz-exam-rec',JSON.stringify(p.rec)); else STORE.del('gfz-exam-rec');
+  STORE.set('gfz-badges',JSON.stringify({f:p.flags,d:p.days}));
+  STORE.del('gfz-last');
+}
+
 /* ===================== render acts ===================== */
 (function(){
   var box=document.getElementById('acts'), nav=document.getElementById('sbNav');
@@ -1189,7 +1493,8 @@ var ACTS=[
 
   var REF=[['places','The Four Places'],['graph','Merge vs Rebase'],
            ['conflict','Reading a Conflict'],['panic','When It Breaks'],
-           ['ref','Every Command'],['quiz','Check Yourself'],['exam','The Practical'],['player2','Adding Player 2']];
+           ['ref','Every Command'],['quiz','Check Yourself'],['exam','The Practical'],['player2','Adding Player 2'],
+           ['badges','Badges']];
   nav.innerHTML=
     '<div class="sb-group">The walkthrough</div>'+
     ACTS.map(function(a){
@@ -1229,14 +1534,14 @@ var ACTS=[
       var link=nav.querySelector('[data-act="'+a.n+'"]');
       if(link)link.classList.toggle('ok',done);
     });
-    STORE.set('gfz-last',firstUndone());
+    if(window.BADGES) BADGES.ticks(state);
   }
   function firstUndone(){
     for(var i=0;i<ACTS.length;i++){
       var a=ACTS[i];
       for(var j=0;j<a.steps.length;j++) if(!state[a.n+'-'+j]) return a.n;
     }
-    return ACTS[ACTS.length-1].n;
+    return null;
   }
 
   box.addEventListener('change',function(e){
@@ -1245,6 +1550,7 @@ var ACTS=[
     state[st.getAttribute('data-id')]=e.target.checked;
     st.classList.toggle('done',e.target.checked);
     save(); refresh();
+    if(e.target.checked&&window.BADGES) BADGES.ticked();
   });
 
   document.getElementById('openAll').onclick=function(){
@@ -1252,48 +1558,51 @@ var ACTS=[
   document.getElementById('closeAll').onclick=function(){
     Array.prototype.forEach.call(box.children,function(d){d.open=false})};
   document.getElementById('clearAll').onclick=function(){
-    if(!confirm('Clear all your progress on this page? This cannot be undone.'))return;
-    state={}; save(); STORE.del('gfz-last');
-    Array.prototype.forEach.call(box.querySelectorAll('.step'),function(s){
-      s.classList.remove('done'); s.querySelector('input').checked=false;});
-    refresh();
+    if(!confirm('Clear all your progress on this page: ticks, quiz answers, the practical and your badges?\n\nCopy your progress code first if you might want it back. This cannot be undone.'))return;
+    PROGRESS_KEYS.forEach(function(k){ STORE.del(k); });
+    location.reload();
   };
   document.getElementById('saveCode').onclick=function(){
-    var code=btoa(JSON.stringify(state)).replace(/=+$/,'');
+    var code=encodeProgress(readProgress(), stepIds());
     copy(code,this,'copied!');
     alert('Progress code copied.\n\nPaste it into "Restore from a code" on another computer.\n\n'+code);
   };
   document.getElementById('loadCode').onclick=function(){
     var v=prompt('Paste your progress code:');
     if(!v)return;
-    try{
-      var o=JSON.parse(atob(v.trim()));
-      if(typeof o!=='object'||!o)throw 0;
-      state=o; save();
-      Array.prototype.forEach.call(box.querySelectorAll('.step'),function(s){
-        var on=!!state[s.getAttribute('data-id')];
-        s.classList.toggle('done',on); s.querySelector('input').checked=on;});
-      refresh();
-      alert('Progress restored.');
-    }catch(e){alert("That code didn't work. Check you copied all of it.");}
+    var p=decodeProgress(v, stepIds());
+    if(!p){ alert("That code didn't work. Check you copied all of it."); return; }
+    writeProgress(p);
+    alert('Progress restored.');
+    location.reload();
   };
 
-  /* resume banner */
-  var last=STORE.get('gfz-last',null), anyDone=false;
+  /* resume banner: the first step not ticked, or, with all of them ticked, what comes next */
+  var anyDone=false, next=firstUndone();
   for(var k in state) if(state[k]){anyDone=true;break;}
-  if(anyDone&&last){
-    var a=ACTS.filter(function(x){return x.n===last})[0];
-    if(a){
-      document.getElementById('resume').classList.remove('hide');
-      document.getElementById('resumeTxt').textContent='You were on step '+a.n+': '+a.t+'.';
-      document.getElementById('resumeBtn').onclick=function(){
+  if(anyDone){
+    var rt=document.getElementById('resumeTxt'), rb=document.getElementById('resumeBtn');
+    document.getElementById('resume').classList.remove('hide');
+    if(next){
+      var a=ACTS.filter(function(x){return x.n===next})[0];
+      rt.textContent='You were on step '+a.n+': '+a.t+'.';
+      rb.onclick=function(){
         var el=document.getElementById('act-'+a.n);
         el.open=true; el.scrollIntoView({block:'start',behavior:'smooth'});
+      };
+    } else {
+      var rec=readJSON('gfz-exam-rec',{})||{};
+      rt.textContent=rec.all ? 'You finished all ten steps, and passed the practical.'
+                             : 'You finished all ten steps. The practical is next: eleven tasks, and nobody gives you the commands.';
+      rb.textContent=rec.all ? 'See your badges' : 'Take the practical';
+      rb.onclick=function(){
+        var el=document.getElementById(rec.all?'badges':'exam');
+        if(el) el.scrollIntoView({block:'start',behavior:'smooth'});
       };
     }
   }
   if(!anyDone){ var f=document.getElementById('act-00'); if(f)f.open=true; }
-  else { var t=document.getElementById('act-'+firstUndone()); if(t)t.open=true; }
+  else if(next){ var t=document.getElementById('act-'+next); if(t)t.open=true; }
 
   refresh();
   OS.apply();
@@ -1343,9 +1652,14 @@ function createGit(opts){
     S = { init:false, wd:{}, idx:{}, v:0,
           commits:{}, order:[],
           refs:{}, HEAD:'main', remoteRefs:{},
+          seen:{},            /* origin/<branch>, as this laptop last saw it */
           lanes:{main:0}, nextLane:1,
           hasRemote:false, upstream:{}, fetched:true,
-          stash:[], reflog:[], merging:null };
+          stash:[], reflog:[], merging:null,
+          /* --global settings, as if Step 01 had been done */
+          config:{'user.name':'Your Name', 'user.email':'you@example.com',
+                  'init.defaultbranch':'main', 'pull.rebase':'false'},
+          local:{} };
   }
   reset();
 
@@ -1419,6 +1733,25 @@ function createGit(opts){
   var buf;
   function w(t,c){ buf.push({t:t, c:c||''}); }
   function blank(){ w(''); }
+  function pad(s,n){ s=String(s); while(s.length<n) s+=' '; return s; }
+  /* git drops a trailing .git when it prints a remote's address */
+  function where(){ return URL.replace(/\.git$/,''); }
+  /* what git prints beside a commit on a terminal: (HEAD -> main, origin/main) */
+  function deco(sha){
+    var out=[];
+    Object.keys(S.refs).forEach(function(n){ if(S.refs[n]===sha) out.push(n===S.HEAD?'HEAD -> '+n:n); });
+    Object.keys(S.seen).forEach(function(n){ if(S.seen[n]===sha) out.push('origin/'+n); });
+    return out.length ? ' ('+out.join(', ')+')' : '';
+  }
+  /* HEAD's reflog, in git's own words: commit:, checkout: moving from, reset: moving to */
+  function logHead(action,sha){ sha=sha||tip(); if(sha) S.reflog.push({sha:sha, action:action}); }
+  /* the lines a fetch prints, and what it teaches this laptop about origin */
+  function fetchLines(was,now){
+    w('From '+where());
+    if(!was) w(' * [new branch]      '+pad(S.HEAD,10)+' -> origin/'+S.HEAD);
+    else w('   '+was+'..'+now+'  '+pad(S.HEAD,10)+' -> origin/'+S.HEAD);
+    S.seen[S.HEAD]=now; S.fetched=true;
+  }
 
   /* ---------- non-command actions ---------- */
   function editFile(name){
@@ -1459,12 +1792,86 @@ function createGit(opts){
     return {ok:true, lines:buf};
   }
 
+  /* ---------- git config ----------
+     --global settings live outside any repository, so they work before git init. */
+  function cfgKey(k){
+    var p=String(k).split('.');
+    if(p.length<2 || !p[0] || !p[p.length-1]) return null;
+    p[0]=p[0].toLowerCase(); p[p.length-1]=p[p.length-1].toLowerCase();
+    return p.join('.');
+  }
+  function cfgGet(k){ return S.local[k]!==undefined ? S.local[k] : S.config[k]; }
+  function config(args){
+    var global=false, list=false, unset=false, rest=[];
+    (args.match(/"[^"]*"|'[^']*'|\S+/g)||[]).forEach(function(p){
+      if(p==='--global') global=true;
+      else if(p==='--list'||p==='-l') list=true;
+      else if(p==='--unset') unset=true;
+      else rest.push(p.replace(/^(["'])(.*)\1$/,'$2'));
+    });
+    function done(ok){ blank(); return {ok:ok, lines:buf, moved:null}; }
+    if(list){
+      Object.keys(S.config).forEach(function(k){ w(k+'='+S.config[k]); });
+      if(!global && S.init){
+        ['core.repositoryformatversion=0','core.filemode=true','core.bare=false',
+         'core.logallrefupdates=true'].forEach(function(t){ w(t); });
+        if(S.hasRemote){ w('remote.origin.url='+URL);
+          w('remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*'); }
+        Object.keys(S.upstream).forEach(function(b){ if(S.upstream[b]){
+          w('branch.'+b+'.remote=origin'); w('branch.'+b+'.merge=refs/heads/'+b); } });
+        Object.keys(S.local).forEach(function(k){ w(k+'='+S.local[k]); });
+      }
+      return done(true);
+    }
+    if(!rest.length){
+      w('usage: git config [--global] <name> [<value>]','r');
+      w('   or: git config [--global] --list','r');
+      w('(for example: git config --global user.name "Your Name")','d');
+      return done(false);
+    }
+    var key=cfgKey(rest[0]);
+    if(!key){ w('error: key does not contain a section: '+rest[0],'r'); return done(false); }
+    if((unset || rest.length>1) && !global && !S.init){
+      w('fatal: not in a git directory','r'); return done(false); }
+    var store = global ? S.config : S.local;
+    if(unset){
+      if(store[key]===undefined){ w('(nothing to unset: '+key+' is not set there)','d'); return done(false); }
+      delete store[key];
+      w('(silent: '+key+' is gone. git config --list shows what is left.)','d');
+      return done(true);
+    }
+    if(rest.length===1){
+      var val = global ? S.config[key] : cfgGet(key);
+      if(val===undefined){ w('(nothing printed: '+key+' is not set)','d'); return done(false); }
+      w(val); return done(true);
+    }
+    store[key]=rest.slice(1).join(' ');
+    w('(silent: git config prints nothing when it works. git config --list shows it.)','d');
+    return done(true);
+  }
+
   /* ---------- git status ---------- */
+  /* the ahead / behind / diverged lines, when this branch tracks one on origin */
+  function tracking(){
+    if(!S.hasRemote || !S.upstream[S.HEAD]) return false;
+    var a=ahead(), b=S.fetched?behind():0;
+    if(a&&b){ w("Your branch and 'origin/"+S.HEAD+"' have diverged,");
+              w('and have '+a+' and '+b+' different commits each, respectively.');
+              w('  (use "git pull" if you want to integrate the remote branch with yours)','d'); }
+    else if(a){ w("Your branch is ahead of 'origin/"+S.HEAD+"' by "+a+" commit"+(a>1?'s':'')+'.');
+                w('  (use "git push" to publish your local commits)','d'); }
+    else if(b){ w("Your branch is behind 'origin/"+S.HEAD+"' by "+b+" commit"+(b>1?'s':'')+
+                  ', and can be fast-forwarded.');
+                w('  (use "git pull" to update your local branch)','d'); }
+    else w("Your branch is up to date with 'origin/"+S.HEAD+"'.");
+    return true;
+  }
   function status(){
     if(!S.init){ w('fatal: not a git repository (or any of the parent directories): .git','r'); return; }
     var st=statusOf();
     if(S.merging){
       w('On branch '+S.HEAD);
+      if(tracking()) blank();
       w('You have unmerged paths.');
       w('  (fix conflicts and run "git commit")','d');
       w('  (use "git merge --abort" to abort the merge)','d');
@@ -1475,18 +1882,7 @@ function createGit(opts){
     }
     w('On branch '+S.HEAD);
     if(!S.order.length){ blank(); w('No commits yet'); }
-    else if(S.hasRemote && S.upstream[S.HEAD]){
-      var a=ahead(), b=S.fetched?behind():0;
-      if(a&&b){ w("Your branch and 'origin/"+S.HEAD+"' have diverged,");
-                w('and have '+a+' and '+b+' different commits each, respectively.');
-                w('  (use "git pull" to merge the remote branch into yours)','d'); }
-      else if(a){ w("Your branch is ahead of 'origin/"+S.HEAD+"' by "+a+" commit"+(a>1?'s':'')+'.');
-                  w('  (use "git push" to publish your local commits)','d'); }
-      else if(b){ w("Your branch is behind 'origin/"+S.HEAD+"' by "+b+" commit"+(b>1?'s':'')+
-                    ', and can be fast-forwarded.');
-                  w('  (use "git pull" to update your local branch)','d'); }
-      else w("Your branch is up to date with 'origin/"+S.HEAD+"'.");
-    }
+    else tracking();
     var any=false;
     if(st.staged.length){
       blank(); w('Changes to be committed:');
@@ -1518,18 +1914,18 @@ function createGit(opts){
   }
 
   /* ---------- commands ---------- */
-  function exec(raw){
-    var r=execInner(raw);
-    var t=tip();
-    var last=S.reflog.length ? S.reflog[S.reflog.length-1].sha : null;
-    if(t && t!==last) S.reflog.push({sha:t, action:String(raw).trim()});
-    return r;
-  }
+  /* Each command that moves HEAD writes its own reflog line (see logHead). */
+  function exec(raw){ return execInner(raw); }
 
   function execInner(raw){
     buf=[]; var moved=null;
     var c=String(raw||'').trim().replace(/\s+/g,' ');
     if(!c) return {ok:false, lines:[], moved:null};
+
+    if(c==='git --version'){ w('git version 2.56.1'); blank();
+      return {ok:true, lines:buf, moved:null}; }
+    var cf=c.match(/^git config(?: (.*))?$/);
+    if(cf) return config(cf[1]||'');
 
     if(c==='git init' || c==='git init -b main'){
       if(S.init) w('Reinitialized existing Git repository in /git-practice/.git/');
@@ -1602,6 +1998,7 @@ function createGit(opts){
       var ash=makeCommit((amm&&amm[1])?amm[1]:old.msg, old.parents.slice(),
                          isStaged()?S.idx:old.tree, old.lane);
       S.refs[S.HEAD]=ash; S.idx=copyTree(S.commits[ash].tree);
+      logHead('commit (amend): '+S.commits[ash].msg);
       w('['+S.HEAD+' '+ash+'] '+S.commits[ash].msg);
       w('(note the id changed: amend does not edit a commit, it replaces it.','d');
       w(' Fine before you push; needs a force push after.)','d');
@@ -1615,9 +2012,10 @@ function createGit(opts){
           w('hint: Fix them up in the work tree, and then use "git add" as appropriate.','d');
           blank(); return {ok:false, lines:buf, moved:null};
         }
-        var msg0 = m?m[1] : am?am[1] : "Merge branch '"+S.merging.from+"'";
+        var msg0 = m?m[1] : am?am[1] : S.merging.msg;
         var sha0=makeCommit(msg0,[tip(),S.merging.theirSha],S.idx,S.lanes[S.HEAD]||0);
         S.refs[S.HEAD]=sha0; S.merging=null; moved='commit';
+        logHead('commit (merge): '+msg0);
         w('['+S.HEAD+' '+sha0+'] '+msg0);
         blank(); return {ok:true, lines:buf, moved:moved};
       }
@@ -1645,6 +2043,7 @@ function createGit(opts){
       var root=!tip(), n=statusOf().staged.length;
       var sha=makeCommit(msg,[tip()],S.idx,laneFor(S.HEAD));
       S.refs[S.HEAD]=sha; moved='commit';
+      logHead('commit'+(root?' (initial)':'')+': '+msg);
       w('['+S.HEAD+(root?' (root-commit)':'')+' '+sha+'] '+msg);
       w(' '+n+' file'+(n>1?'s':'')+' changed');
       blank(); return {ok:true, lines:buf, moved:moved};
@@ -1658,6 +2057,7 @@ function createGit(opts){
         return {ok:false, lines:buf, moved:null}; }
       if(!tip()){ w("fatal: you must commit something before you can branch",'r'); blank();
         return {ok:false, lines:buf, moved:null}; }
+      logHead('checkout: moving from '+S.HEAD+' to '+nb);
       S.refs[nb]=tip(); laneFor(nb); S.HEAD=nb;
       w("Switched to a new branch '"+nb+"'");
       w('(a branch is just a sticky note pointing at the commit you were on)','d');
@@ -1678,7 +2078,7 @@ function createGit(opts){
         w('Aborting','r');
         blank(); return {ok:false, lines:buf, moved:null};
       }
-      S.HEAD=to;
+      var fromB=S.HEAD; S.HEAD=to;
       var untrackedKeep={};
       Object.keys(S.wd).forEach(function(f){
         if(S.idx[f]===undefined && headTree()[f]===undefined) untrackedKeep[f]=S.wd[f];
@@ -1686,6 +2086,7 @@ function createGit(opts){
       S.idx=copyTree(treeOf(S.refs[to]));
       S.wd=copyTree(S.idx);
       Object.keys(untrackedKeep).forEach(function(f){ S.wd[f]=untrackedKeep[f]; });
+      logHead('checkout: moving from '+fromB+' to '+to);
       w("Switched to branch '"+to+"'");
       w('(look at your files: git rewrote them to match this branch)','d');
       blank(); return {ok:true, lines:buf, moved:'branch'};
@@ -1716,9 +2117,10 @@ function createGit(opts){
 
     /* ---- merge ---- */
     if(c==='git merge --abort'){
-      if(!S.merging){ w('fatal: There is no merge to abort.','r'); blank();
+      if(!S.merging){ w('fatal: There is no merge to abort (MERGE_HEAD missing).','r'); blank();
         return {ok:false, lines:buf, moved:null}; }
       S.merging=null; S.idx=copyTree(headTree()); S.wd=copyTree(S.idx);
+      logHead('reset: moving to HEAD');
       w('(merge aborted: everything back exactly as it was)','d');
       blank(); return {ok:true, lines:buf, moved:'merge'};
     }
@@ -1728,7 +2130,7 @@ function createGit(opts){
       if(S.merging){ w('error: Merging is not possible because you have unmerged files.','r');
         blank(); return {ok:false, lines:buf, moved:null}; }
       var theirs = S.refs[src]!==undefined ? S.refs[src]
-                 : (src.indexOf('origin/')===0 ? S.remoteRefs[src.slice(7)] : undefined);
+                 : (src.indexOf('origin/')===0 ? S.seen[src.slice(7)] : undefined);
       if(theirs===undefined){ w('merge: '+src+' - not something we can merge','r'); blank();
         return {ok:false, lines:buf, moved:null}; }
       var mine=tip();
@@ -1736,6 +2138,7 @@ function createGit(opts){
         return {ok:true, lines:buf, moved:null}; }
       if(isAncestor(mine,theirs)){
         S.refs[S.HEAD]=theirs; S.idx=copyTree(treeOf(theirs)); S.wd=copyTree(S.idx);
+        logHead('merge '+src+': Fast-forward');
         w('Updating '+(mine?mine:'0000000')+'..'+theirs);
         w('Fast-forward');
         w('(fast-forward: your branch had nothing of its own, so git just','d');
@@ -1744,17 +2147,20 @@ function createGit(opts){
       }
       var base=mergeBase(mine,theirs);
       var res=mergeTrees(treeOf(base), treeOf(mine), treeOf(theirs));
+      var mmsg = src.indexOf('origin/')===0 ? "Merge remote-tracking branch '"+src+"'"
+                                            : "Merge branch '"+src+"'";
       if(!res.conflicts.length){
         S.idx=copyTree(res.tree); S.wd=copyTree(res.tree);
-        var msh2=makeCommit("Merge branch '"+src+"'",[mine,theirs],res.tree,S.lanes[S.HEAD]||0);
+        var msh2=makeCommit(mmsg,[mine,theirs],res.tree,S.lanes[S.HEAD]||0);
         S.refs[S.HEAD]=msh2;
+        logHead('merge '+src+": Merge made by the 'ort' strategy.");
         w("Merge made by the 'ort' strategy.");
         w('(the two branches changed DIFFERENT files, so git combined them with','d');
         w(' no help from you. That is the usual case, and why merges are normally dull.)','d');
         blank(); return {ok:true, lines:buf, moved:'merge'};
       }
       S.idx=copyTree(res.tree); S.wd=copyTree(res.tree);
-      S.merging={from:src, theirSha:theirs, conflicts:res.conflicts.slice()};
+      S.merging={from:src, theirSha:theirs, conflicts:res.conflicts.slice(), msg:mmsg};
       res.conflicts.forEach(function(f){ w('Auto-merging '+f); });
       res.conflicts.forEach(function(f){ w('CONFLICT (content): Merge conflict in '+f,'r'); });
       w('Automatic merge failed; fix conflicts and then commit the result.','r');
@@ -1786,14 +2192,7 @@ function createGit(opts){
         var cm=S.commits[s3]; if(!cm)continue; list.push(cm);
         cm.parents.forEach(function(p){ stack.push(p); });
       }
-      list.forEach(function(cm,i){
-        var labels=[];
-        Object.keys(S.refs).forEach(function(n3){ if(S.refs[n3]===cm.sha)
-          labels.push(n3===S.HEAD?'HEAD -> '+n3:n3); });
-        Object.keys(S.remoteRefs).forEach(function(n3){ if(S.remoteRefs[n3]===cm.sha)
-          labels.push('origin/'+n3); });
-        w(cm.sha+(labels.length?' ('+labels.join(', ')+')':'')+' '+cm.msg, i===0?'u':'');
-      });
+      list.forEach(function(cm,i){ w(cm.sha+deco(cm.sha)+' '+cm.msg, i===0?'u':''); });
       blank(); return {ok:true, lines:buf, moved:null};
     }
     if(c==='git diff'){
@@ -1861,26 +2260,41 @@ function createGit(opts){
 
     /* ---- stash ---- */
     if(c==='git stash'||c==='git stash push'){
+      if(!tip()){ w('You do not have the initial commit yet','r'); blank();
+        return {ok:false, lines:buf, moved:null}; }
       if(!dirty()){ w('No local changes to save'); blank();
         return {ok:false, lines:buf, moved:null}; }
-      S.stash.push({wd:copyTree(S.wd), idx:copyTree(S.idx)});
-      S.idx=copyTree(headTree()); S.wd=copyTree(S.idx);
-      w('Saved working directory and index state WIP on '+S.HEAD);
+      var label='WIP on '+S.HEAD+': '+tip()+' '+S.commits[tip()].msg;
+      var keep={}, ht4=headTree();
+      /* untracked files are not stashed, so they stay where they are */
+      Object.keys(S.wd).forEach(function(f){
+        if(S.idx[f]===undefined && ht4[f]===undefined) keep[f]=S.wd[f]; });
+      S.stash.push({wd:copyTree(S.wd), idx:copyTree(S.idx), label:label,
+                    id:(nextSha()+nextSha()+nextSha()+nextSha()+nextSha()+nextSha()).slice(0,40)});
+      S.idx=copyTree(ht4); S.wd=copyTree(S.idx);
+      Object.keys(keep).forEach(function(f){ S.wd[f]=keep[f]; });
+      logHead('reset: moving to HEAD');
+      w('Saved working directory and index state '+label);
       w('(your changes are in the drawer. The files are back to your last commit.)','d');
       blank(); return {ok:true, lines:buf, moved:'stash'};
     }
     if(c==='git stash pop'||c==='git stash apply'){
       if(!S.stash.length){ w('No stash entries found.','r'); blank();
         return {ok:false, lines:buf, moved:null}; }
-      var st4=(c==='git stash pop') ? S.stash.pop() : S.stash[S.stash.length-1];
-      S.wd=copyTree(st4.wd); S.idx=copyTree(st4.idx);
+      var top4=S.stash[S.stash.length-1];
+      if(c==='git stash pop') S.stash.pop();
+      S.wd=copyTree(top4.wd); S.idx=copyTree(top4.idx);
+      status();
+      if(c==='git stash pop') w('Dropped refs/stash@{0} ('+top4.id+')');
       w('(taken back out of the drawer: your changes are in the files again)','d');
       blank(); return {ok:true, lines:buf, moved:'stash'};
     }
     if(c==='git stash list'){
       if(!S.stash.length){ w('(the drawer is empty)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
-      S.stash.forEach(function(_,i){ w('stash@{'+i+'}: WIP on '+S.HEAD); });
+      /* stash@{0} is the newest: the one pop takes */
+      for(var si=S.stash.length-1; si>=0; si--)
+        w('stash@{'+(S.stash.length-1-si)+'}: '+S.stash[si].label);
       blank(); return {ok:true, lines:buf, moved:null};
     }
 
@@ -1905,6 +2319,7 @@ function createGit(opts){
       if(!to2){ w("fatal: ambiguous argument '"+(rs[2]||'HEAD')+"': unknown revision",'r');
         blank(); return {ok:false, lines:buf, moved:null}; }
       S.refs[S.HEAD]=to2;
+      logHead('reset: moving to '+(rs[2]||'HEAD'));
       if(mode==='--soft'){
         w('(HEAD moved back. Your changes are still staged, ready to re-commit.)','d');
       } else if(mode==='--hard'){
@@ -1925,7 +2340,7 @@ function createGit(opts){
         return {ok:true, lines:buf, moved:null}; }
       for(var ri=S.reflog.length-1, n6=0; ri>=0; ri--, n6++){
         var e6=S.reflog[ri];
-        w(e6.sha+' HEAD@{'+n6+'}: '+e6.action, n6===0?'u':'');
+        w(e6.sha+deco(e6.sha)+' HEAD@{'+n6+'}: '+e6.action, n6===0?'u':'');
       }
       w('(every position HEAD has been in. Nothing committed is ever really lost:','d');
       w(' git reset --hard <that id> takes you back.)','d');
@@ -1946,6 +2361,7 @@ function createGit(opts){
       });
       var rsha=makeCommit('Revert "'+bc.msg+'"',[tip()],nt2,laneFor(S.HEAD));
       S.refs[S.HEAD]=rsha; S.idx=copyTree(nt2); S.wd=copyTree(nt2);
+      logHead('revert: Revert "'+bc.msg+'"');
       w('['+S.HEAD+' '+rsha+'] Revert "'+bc.msg+'"');
       w('(revert does not delete anything: it adds a NEW commit that undoes the old','d');
       w(' one. That is why it is safe on work you have already pushed.)','d');
@@ -1958,7 +2374,7 @@ function createGit(opts){
     var rb=c.match(/^git rebase ([\w./][\w./-]*)$/);
     if(rb){
       var onto=S.refs[rb[1]]!==undefined ? S.refs[rb[1]]
-             : (rb[1].indexOf('origin/')===0 ? S.remoteRefs[rb[1].slice(7)] : undefined);
+             : (rb[1].indexOf('origin/')===0 ? S.seen[rb[1].slice(7)] : undefined);
       if(onto===undefined){ w("fatal: invalid upstream '"+rb[1]+"'",'r'); blank();
         return {ok:false, lines:buf, moved:null}; }
       if(dirty()){ w('error: cannot rebase: You have unstaged changes.','r'); blank();
@@ -1970,6 +2386,8 @@ function createGit(opts){
       }
       if(!mineTip || isAncestor(mineTip,onto)){
         S.refs[S.HEAD]=onto; S.idx=copyTree(treeOf(onto)); S.wd=copyTree(S.idx);
+        logHead('rebase (start): checkout '+rb[1]);
+        logHead('rebase (finish): returning to refs/heads/'+S.HEAD);
         w('Successfully rebased and updated refs/heads/'+S.HEAD+'.');
         w('(nothing of your own to replay, so this was just a fast-forward)','d');
         blank(); return {ok:true, lines:buf, moved:'rebase'};
@@ -1977,14 +2395,17 @@ function createGit(opts){
       var ontoReach=reach(onto), mineReach=reach(mineTip);
       var replay=S.order.filter(function(s7){ return mineReach[s7] && !ontoReach[s7]; });
       var parent=onto, pairs=[];
+      logHead('rebase (start): checkout '+rb[1], onto);
       replay.forEach(function(oldSha){
         var oc=S.commits[oldSha], op=treeOf(oc.parents[0]), nt3=copyTree(treeOf(parent));
         Object.keys(oc.tree).forEach(function(f){ if(oc.tree[f]!==op[f]) nt3[f]=oc.tree[f]; });
         Object.keys(op).forEach(function(f){ if(oc.tree[f]===undefined) delete nt3[f]; });
         var ns=makeCommit(oc.msg,[parent],nt3,laneFor(S.HEAD));
+        logHead('rebase (pick): '+oc.msg, ns);
         pairs.push([oldSha,ns]); parent=ns;
       });
       S.refs[S.HEAD]=parent; S.idx=copyTree(treeOf(parent)); S.wd=copyTree(S.idx);
+      logHead('rebase (finish): returning to refs/heads/'+S.HEAD);
       w('Successfully rebased and updated refs/heads/'+S.HEAD+'.');
       pairs.forEach(function(p){ w('  '+p[0]+' became '+p[1]+'  '+S.commits[p[1]].msg,'u'); });
       w('(look at those ids. Rebase did not MOVE your commits: it made brand new','d');
@@ -2010,11 +2431,11 @@ function createGit(opts){
     if(/^git fetch/.test(c)){
       if(!S.hasRemote){ w("fatal: 'origin' does not appear to be a git repository",'r'); blank();
         return {ok:false, lines:buf, moved:null}; }
-      if(!behind()){ w('(already up to date: nothing new on origin)','d'); blank();
+      var nowF=S.remoteRefs[S.HEAD];
+      if(!nowF || nowF===S.seen[S.HEAD]){ S.fetched=true;
+        w('(already up to date: nothing new on origin, so real git prints nothing)','d'); blank();
         return {ok:true, lines:buf, moved:null}; }
-      S.fetched=true;
-      w('From github.com:you/git-practice');
-      w('   3f2a1b0..'+S.remoteRefs[S.HEAD]+'  '+S.HEAD+'       -> origin/'+S.HEAD);
+      fetchLines(S.seen[S.HEAD], nowF);
       w('(downloaded, and changed nothing in your folder. fetch is always safe.)','d');
       blank(); return {ok:true, lines:buf, moved:'fetch'};
     }
@@ -2022,25 +2443,58 @@ function createGit(opts){
       if(!S.hasRemote){ w("fatal: 'origin' does not appear to be a git repository",'r'); blank();
         return {ok:false, lines:buf, moved:null}; }
       var rem=S.remoteRefs[S.HEAD]||null; S.fetched=true;
+      if(rem && rem!==S.seen[S.HEAD]) fetchLines(S.seen[S.HEAD], rem);
       if(!rem || rem===tip() || isAncestor(rem,tip())){ w('Already up to date.'); blank();
         return {ok:true, lines:buf, moved:null}; }
-      if(!tip() || isAncestor(tip(),rem)){
+      var before=tip();
+      if(!before || isAncestor(before,rem)){
         S.refs[S.HEAD]=rem; S.idx=copyTree(treeOf(rem)); S.wd=copyTree(S.idx);
-        w('Updating 3f2a1b0..'+rem); w('Fast-forward');
+        logHead('pull: Fast-forward');
+        w('Updating '+(before||'0000000')+'..'+rem); w('Fast-forward');
         w('(fast-forward: you had nothing of your own, so git just moved you up)','d');
         blank(); return {ok:true, lines:buf, moved:'pull'};
       }
+      /* Both sides moved. What a modern git does next depends on how it is set up
+         (captured from git 2.44): with nothing set, it stops and asks. */
+      var noRb=/--no-rebase/.test(c);
+      if(!noRb && (/--rebase/.test(c) || cfgGet('pull.rebase')==='true')){
+        w('(the fetch half is done. This sandbox does not do the rebase half inside pull:','d');
+        w(' run git rebase origin/'+S.HEAD+', which is the same thing.)','d');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      if(/--ff-only/.test(c) || (!noRb && cfgGet('pull.ff')==='only')){
+        w('fatal: Not possible to fast-forward, aborting.','r');
+        w('(this git is set to fast-forward only. git pull --no-rebase merges, this once.)','d');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      if(!noRb && cfgGet('pull.rebase')===undefined && cfgGet('pull.ff')===undefined){
+        ['You have divergent branches and need to specify how to reconcile them.',
+         'You can do so by running one of the following commands sometime before',
+         'your next pull:', '',
+         '  git config pull.rebase false  # merge',
+         '  git config pull.rebase true   # rebase',
+         '  git config pull.ff only       # fast-forward only', '',
+         'You can replace "git config" with "git config --global" to set a default',
+         'preference for all repositories. You can also pass --rebase, --no-rebase,',
+         'or --ff-only on the command line to override the configured default per',
+         'invocation.'].forEach(function(t){ w('hint: '+t,'d'); });
+        w('fatal: Need to specify how to reconcile divergent branches.','r');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
       var pb=mergeBase(tip(),rem), pr=mergeTrees(treeOf(pb),treeOf(tip()),treeOf(rem));
+      var pmsg="Merge branch '"+S.HEAD+"' of "+where();
       if(pr.conflicts.length){
         S.idx=copyTree(pr.tree); S.wd=copyTree(pr.tree);
-        S.merging={from:'origin/'+S.HEAD, theirSha:rem, conflicts:pr.conflicts.slice()};
+        S.merging={from:'origin/'+S.HEAD, theirSha:rem, conflicts:pr.conflicts.slice(), msg:pmsg};
+        pr.conflicts.forEach(function(f){ w('Auto-merging '+f); });
         pr.conflicts.forEach(function(f){ w('CONFLICT (content): Merge conflict in '+f,'r'); });
         w('Automatic merge failed; fix conflicts and then commit the result.','r');
         blank(); return {ok:false, lines:buf, moved:'pull'};
       }
       S.idx=copyTree(pr.tree); S.wd=copyTree(pr.tree);
-      var msh=makeCommit("Merge branch 'main' of "+URL,[tip(),rem],pr.tree,S.lanes[S.HEAD]||0);
+      var msh=makeCommit(pmsg,[tip(),rem],pr.tree,S.lanes[S.HEAD]||0);
       S.refs[S.HEAD]=msh;
+      logHead("pull: Merge made by the 'ort' strategy.");
       w("Merge made by the 'ort' strategy.");
       w('(you and github changed DIFFERENT files, so git combined them with no','d');
       w(' help from you. Had you both changed the same one, this would have','d');
@@ -2060,22 +2514,47 @@ function createGit(opts){
         w('(Read the error: git just handed you the exact command.)','d');
         blank(); return {ok:false, lines:buf, moved:null};
       }
-      if(behind() && !/--force/.test(c)){
+      var prev=S.remoteRefs[S.HEAD];
+      if(/--force-with-lease/.test(c) && prev!==S.seen[S.HEAD]){
         w('To '+URL);
-        w(' ! [rejected]        '+S.HEAD+' -> '+S.HEAD+' (fetch first)','r');
+        w(' ! [rejected]        '+S.HEAD+' -> '+S.HEAD+' (stale info)','r');
         w("error: failed to push some refs to '"+URL+"'",'r');
-        w('hint: Updates were rejected because the remote contains work that you do','d');
-        w('hint: not have locally. Integrate the remote changes (e.g. "git pull")','d');
-        w('(git is protecting you: pushing now would erase what is on github.)','d');
+        w('(--force-with-lease said no: github moved since you last fetched, and forcing','d');
+        w(' now would erase that. That check is the whole point of it.)','d');
+        blank(); return {ok:false, lines:buf, moved:null};
+      }
+      if(behind() && !/--force/.test(c)){
+        /* fetch first: github has work this laptop has never seen.
+           non-fast-forward: it has seen it, and is still behind (a rebase does this). */
+        var known = prev===S.seen[S.HEAD];
+        w('To '+URL);
+        w(' ! [rejected]        '+S.HEAD+' -> '+S.HEAD+(known?' (non-fast-forward)':' (fetch first)'),'r');
+        w("error: failed to push some refs to '"+URL+"'",'r');
+        (known
+          ? ['Updates were rejected because the tip of your current branch is behind',
+             'its remote counterpart. If you want to integrate the remote changes,',
+             "use 'git pull' before pushing again."]
+          : ['Updates were rejected because the remote contains work that you do not',
+             'have locally. This is usually caused by another repository pushing to',
+             'the same ref. If you want to integrate the remote changes, use',
+             "'git pull' before pushing again."]
+        ).concat(["See the 'Note about fast-forwards' in 'git push --help' for details."])
+         .forEach(function(t){ w('hint: '+t,'d'); });
+        if(known){ w('(just rebased? then this is expected: the ids changed. Push with','d');
+                   w(' --force-with-lease. Otherwise, git pull first.)','d'); }
+        else w('(git is protecting you: pushing now would erase what is on github.)','d');
         blank(); return {ok:false, lines:buf, moved:null};
       }
       if(/-u|--set-upstream/.test(c)) S.upstream[S.HEAD]=true;
-      if(!tip() || S.remoteRefs[S.HEAD]===tip()){ w('Everything up-to-date'); blank();
+      if(!tip() || prev===tip()){ w('Everything up-to-date'); blank();
         return {ok:true, lines:buf, moved:null}; }
-      S.remoteRefs[S.HEAD]=tip(); moved='push';
+      var forced = !!prev && !isAncestor(prev, tip());
+      S.remoteRefs[S.HEAD]=tip(); S.seen[S.HEAD]=tip(); moved='push';
       w('Enumerating objects: 3, done.','d');
       w('To '+URL);
-      w('   3f2a1b0..'+tip()+'  '+S.HEAD+' -> '+S.HEAD);
+      if(!prev) w(' * [new branch]      '+S.HEAD+' -> '+S.HEAD);
+      else if(forced) w(' + '+prev+'...'+tip()+' '+S.HEAD+' -> '+S.HEAD+' (forced update)');
+      else w('   '+prev+'..'+tip()+'  '+S.HEAD+' -> '+S.HEAD);
       if(/-u|--set-upstream/.test(c)) w("branch '"+S.HEAD+"' set up to track 'origin/"+S.HEAD+"'.");
       blank(); return {ok:true, lines:buf, moved:moved};
     }
@@ -2171,7 +2650,7 @@ function createGit(opts){
         ahead:ahead(), behind:behind(),
         branch:S.HEAD, branches:Object.keys(S.refs), merging:!!S.merging,
         conflicts:S.merging?S.merging.conflicts.slice():[],
-        lastSha:tip(), tree:copyTree(headTree()),
+        lastSha:tip(), tree:copyTree(headTree()), stashes:S.stash.length,
         graph:graph()
       };
     }
@@ -2254,7 +2733,7 @@ function createGit(opts){
   var H={svg:null,edges:null,nodes:{},labels:{}};
   var NODE_STYLE={
     shared:{fill:'var(--steel-wash)',stroke:'var(--steel)',dash:''},
-    local :{fill:'var(--amber-wash)',stroke:'var(--amber)',dash:''},
+    local :{fill:'var(--accent-wash)',stroke:'var(--accent)',dash:''},
     remote:{fill:'none',              stroke:'var(--steel)',dash:'3 3'},
     more  :{fill:'none',              stroke:'var(--rule)', dash:'2 3'},
     orphan:{fill:'none',              stroke:'var(--rule)', dash:'2 4'}
@@ -2425,7 +2904,7 @@ function createGit(opts){
       }
       rec.textContent=(ref.head?'▸ ':'')+ref.name;
       rec.setAttribute('fill', ref.kind==='remote' ? 'var(--steel)'
-                              : ref.head ? 'var(--amber)' : 'var(--ink-2)');
+                              : ref.head ? 'var(--accent)' : 'var(--ink-2)');
       rec.style.opacity='1';
       moveTo(rec,p.x+R+8,p.y+dy,!fresh);
       if(fresh) requestAnimationFrame(function(){ rec.style.opacity='1'; });
@@ -2464,15 +2943,19 @@ function createGit(opts){
        'git stash','git stash pop','git stash list',
        'git reset --soft|--mixed|--hard HEAD~1','git reflog','git revert <id>',
        'git commit --amend -m "message"',
-       'git remote add origin <url>','git push -u origin main','git push','git fetch','git pull',
+       'git remote add origin <url>','git push -u origin main','git push','git push --force-with-lease',
+       'git fetch','git pull','git pull --no-rebase',
+       'git config --global user.name "Your Name"','git config --list',
        'clear','reset'].forEach(function(l){o('  '+esc(l),'d')});
       o(''); return;
     }
     if(c==='clear'){ term.innerHTML=''; return; }
     if(c==='reset'){ git.reset(); term.innerHTML=''; boot(); draw(); return; }
     o('<span class="g">$</span> <span class="u">'+esc(c)+'</span>');
+    var before=git.snapshot();
     var r=git.exec(c);
     emit(r.lines); flow(r.moved); draw();
+    if(window.BADGES) BADGES.ran(c,before,git.snapshot(),r);
   }
 
   Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'),function(bt){
@@ -2486,6 +2969,7 @@ function createGit(opts){
     var r=git.addIgnore();
     if(r.ok) o('<span class="g">$</span> <span class="d">(editor)</span>');
     emit(r.lines); draw();
+    if(r.ok&&window.BADGES) BADGES.flag('secret');
   };
   document.getElementById('b-github').onclick=function(){
     var r=git.remoteCommit();
@@ -2537,7 +3021,7 @@ function createGit(opts){
     ['main','feature'].forEach(function(b){
       var t=document.createElementNS(NS,'text');t.setAttribute('class','blabel');
       t.setAttribute('data-b',b);t.setAttribute('text-anchor','middle');
-      t.setAttribute('fill',b==='main'?'var(--steel)':'var(--amber)');
+      t.setAttribute('fill',b==='main'?'var(--steel)':'var(--accent)');
       t.textContent=b;svg.appendChild(t);});
   }
   function place(){
@@ -2546,9 +3030,9 @@ function createGit(opts){
       el.g.style.transform='translate('+n.x+'px,'+n.y+'px)';
       el.g.style.opacity=n.hide?0:1;el.t.textContent=n.l;
       var onMain=n.y>100;
-      el.c.setAttribute('fill',onMain?'var(--steel-wash)':'var(--amber-wash)');
-      el.c.setAttribute('stroke',onMain?'var(--steel)':'var(--amber)');
-      el.t.setAttribute('fill',onMain?'var(--steel)':'var(--amber)');
+      el.c.setAttribute('fill',onMain?'var(--steel-wash)':'var(--accent-wash)');
+      el.c.setAttribute('stroke',onMain?'var(--steel)':'var(--accent)');
+      el.t.setAttribute('fill',onMain?'var(--steel)':'var(--accent)');
       el.s.textContent=n.s;});
     var eg=svg.querySelector('#edges');
     Array.prototype.forEach.call(eg.children,function(p,i){
@@ -2644,6 +3128,7 @@ function createGit(opts){
    ['setup','git config --global user.name "Name"','The name stamped on every commit you make.'],
    ['setup','git config --global user.email "you@x.com"','Same for email. Use your GitHub noreply address to stay private.'],
    ['setup','git config --global init.defaultBranch main','New repos start on main instead of master. Do this before your first repo.'],
+   ['setup','git config --global pull.rebase false','Pull merges when your laptop and GitHub have both moved on, instead of stopping to ask.'],
    ['setup','git config --global --list','Show everything you have configured.'],
    ['start','git init','Turn the current folder into a repository. Creates the hidden .git folder.'],
    ['start','git clone <url>','Download an existing repository, with its full history.'],
@@ -2681,6 +3166,7 @@ function createGit(opts){
    ['branch','git rebase --abort','The panic button for a rebase.'],
    ['github','git remote add origin <url>','Give a GitHub URL the nickname origin. Sends nothing.'],
    ['github','git remote -v','Show what origin actually points at.'],
+   ['github','gh auth login','GitHub\'s own tool signs Git in to your account. The easy way on a Mac or Linux.'],
    ['github','git push -u origin main','First push. -u links the branches so later you can type just git push.'],
    ['github','git push','Send your commits up to GitHub.'],
    ['github danger','git push --force-with-lease','Needed after a rebase. Refuses if someone else pushed meanwhile.'],
@@ -2688,6 +3174,7 @@ function createGit(opts){
    ['github','git fetch','Download new commits and change nothing. Always completely safe.'],
    ['github','git fetch --prune','Fetch, and forget branches that were deleted on GitHub.'],
    ['github','git pull','fetch + merge in one. Most surprise merges come from here.'],
+   ['github','git pull --no-rebase','fetch + merge, whatever your settings say. The fix when a pull stops with "fatal".'],
    ['github','git pull --rebase','fetch + rebase instead. Keeps history in a straight line.'],
    ['other','.gitignore','A file listing what Git should never track. Does not affect already-tracked files.'],
    ['other','git rm --cached <file>','Stop tracking a file without deleting it. Needed for secrets already committed.'],
@@ -2738,21 +3225,30 @@ function createGit(opts){
     o:['Git refuses to commit without one','So you can abandon a failed experiment cleanly, keep main working, and know the motion every team expects','They make Git run faster','They are required for GitHub to display your repo'],
     a:1,e:'Branches cost about three seconds and give you a place to try something risky without touching the version you know works. Deleting a branch is much easier than unpicking a bad idea from main.'}
   ];
-  var box=document.getElementById('quizbox'), scored={};
+  var box=document.getElementById('quizbox'), scored={}, picked=readJSON('gfz-quiz',{})||{};
   box.innerHTML=Q.map(function(q,i){
     return '<div class="q" data-i="'+i+'"><div class="qq"><b>'+(i+1)+'</b><span>'+q.q+'</span></div>'+
       q.o.map(function(o,j){return '<button type="button" class="opt" data-j="'+j+'">'+o+'</button>'}).join('')+
       '<div class="qex" hidden></div></div>';}).join('');
-  box.addEventListener('click',function(ev){
-    var b=ev.target.closest('.opt');if(!b)return;
-    var card=b.closest('.q'), i=+card.getAttribute('data-i'), j=+b.getAttribute('data-j');
-    if(scored[i]!==undefined)return;
-    scored[i]=(j===Q[i].a);
+  /* quiet: putting back an answer from an earlier visit, so nothing is saved or awarded again */
+  function answer(i,j,quiet){
+    if(!Q[i]||scored[i]!==undefined||!(j>=0&&j<Q[i].o.length))return;
+    scored[i]=(j===Q[i].a); picked[i]=j;
+    var card=box.querySelector('.q[data-i="'+i+'"]');
     Array.prototype.forEach.call(card.querySelectorAll('.opt'),function(o,k){
       if(k===Q[i].a)o.classList.add('right');else if(k===j)o.classList.add('wrong');});
     var ex=card.querySelector('.qex');ex.innerHTML=Q[i].e;ex.hidden=false;
     var n=0,t=0;for(var k in scored){t++;if(scored[k])n++;}
     document.getElementById('score').textContent=n+' / '+t+' correct'+(t===Q.length?', all seven answered.':'');
+    if(quiet) return;
+    STORE.set('gfz-quiz',JSON.stringify(picked));
+    if(window.BADGES) BADGES.quiz(scored,Q.length);
+  }
+  Object.keys(picked).forEach(function(i){ answer(+i,+picked[i],true); });
+  if(window.BADGES&&Object.keys(scored).length) BADGES.quiz(scored,Q.length);
+  box.addEventListener('click',function(ev){
+    var b=ev.target.closest('.opt');if(!b)return;
+    answer(+b.closest('.q').getAttribute('data-i'),+b.getAttribute('data-j'));
   });
 })();
 
@@ -2763,7 +3259,39 @@ function createGit(opts){
 (function(){
   var term=document.getElementById('xterm'), input=document.getElementById('xinput');
   if(!term) return;
-  var git=createGit(), idx=0, passed={}, fixTip=null, lostSha=null, revealed={};
+  /* A run is saved as a seed plus everything the learner did, and rebuilt on load by doing
+     it all again. Commit ids come from the seed, so the rebuilt repository has the ids the
+     learner saw, and may have copied: task 11 asks for one. */
+  var RUN='gfz-exam-run', REC='gfz-exam-rec';
+  function seeded(seed){
+    var a=seed|0;
+    function rnd(){ a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
+    return function(){ var c='0123456789abcdef', x=''; for(var i=0;i<7;i++) x+=c[Math.floor(rnd()*16)]; return x; };
+  }
+  function freshRun(){ return {v:1, seed:Math.floor(Math.random()*2147483647), log:[]}; }
+  var runRec=readJSON(RUN,null);
+  if(!runRec||runRec.v!==1||typeof runRec.seed!=='number'||!Array.isArray(runRec.log)) runRec=freshRun();
+  var rec=readJSON(REC,{})||{};
+  var git=createGit({sha:seeded(runRec.seed)}), idx=0, passed={}, fixTip=null, lostSha=null, revealed={};
+  var replaying=false, busy=false, gen=0;
+  function saveRun(){ if(!replaying) STORE.set(RUN,JSON.stringify(runRec)); }
+  function passedCount(){ var n=0; for(var k in passed) if(passed[k]) n++; return n; }
+  function paintRec(){
+    var el=document.getElementById('xrec'); if(!el) return;
+    if(!rec.best){ el.hidden=true; return; }
+    el.hidden=false;
+    el.textContent=rec.all ? 'Your record: all '+TASKS.length+' passed, first on '+niceDate(rec.all)+'.'
+                           : 'Your best so far: '+rec.best+' of '+TASKS.length+' passed.';
+  }
+  function record(){
+    if(replaying) return;
+    var n=passedCount(), changed=false;
+    if(!(rec.best>=n)){ rec.best=n; changed=true; }
+    if(n===TASKS.length&&!rec.all){ rec.all=today(); changed=true; }
+    if(!changed) return;
+    STORE.set(REC,JSON.stringify(rec)); paintRec();
+    if(window.BADGES) BADGES.exam(rec,TASKS.length);
+  }
 
   function refSha(s,name){
     var r=s.graph.refs.filter(function(x){ return x.name===name; })[0];
@@ -2836,7 +3364,7 @@ function createGit(opts){
      b:'While you were working, someone added a <code>README.md</code> on the website. GitHub now has a commit you do not. Get it onto your machine.',
      h:'<code>git pull</code>. (Or <code>git fetch</code> then <code>git merge origin/main</code>: pull is those two in one.)',
      setup:function(){ git.remoteCommit('README.md'); },
-     setupNote:'(someone added a README.md on github.com: check git status)',
+     setupNote:'(someone added a README.md on github.com. git status can\'t see it until you fetch: try git fetch, then git status)',
      ok:function(s){ return s.hasRemote && s.behind===0 && !s.merging; }},
 
     {t:'Get back a commit you "lost"',
@@ -2893,12 +3421,18 @@ function createGit(opts){
     try{ okNow=t.ok(git.snapshot()); }catch(e){ okNow=false; }
     if(!okNow) return;
     passed[idx]=true;
+    record();
     o('');
     o('<span class="g">✓ Task '+(idx+1)+' complete: '+esc(t.t)+'</span>');
     paintTask();
     if(idx<TASKS.length-1){
       o('<span class="d">(moving on…)</span>');
-      setTimeout(function(){ idx++; announce(); },900);
+      if(replaying){ idx++; announce(); return; }
+      /* nothing is accepted until the next task is set up, so a saved run replays in the
+         same order it was played */
+      busy=true;
+      var mine=gen;
+      setTimeout(function(){ if(mine!==gen) return; busy=false; idx++; announce(); },900);
     } else {
       var n=0; for(var k in passed) if(passed[k]) n++;
       o('');
@@ -2911,39 +3445,58 @@ function createGit(opts){
     }
   }
 
-  function run(raw){
-    var c=String(raw||'').trim();
-    if(!c) return;
+  function doRun(c){
     if(c==='clear'){ term.innerHTML=''; return; }
     o('<span class="g">$</span> <span class="u">'+esc(c)+'</span>');
     if(c==='help'){
       o('Same commands as the sandbox above. Try <span class="b">git status</span> when stuck.','d');
       o(''); return;
     }
+    var before=replaying?null:git.snapshot();
     var r=git.exec(c);
     emit(r.lines);
+    if(!replaying&&window.BADGES) BADGES.ran(c,before,git.snapshot(),r);
     check();
   }
-
-  document.getElementById('x-edit').onclick=function(){
+  function doEdit(){
     var r=git.editFile();
     if(r.ok) o('<span class="g">$</span> <span class="d">(editor)</span>');
     emit(r.lines); check();
-  };
-  document.getElementById('x-hint').onclick=function(){
+  }
+  function doHint(){
     revealed[idx]=true; paintTask();
-  };
-  document.getElementById('x-skip').onclick=function(){
+    if(!replaying&&window.BADGES) BADGES.hint();
+  }
+  function doSkip(){
     if(idx>=TASKS.length-1){ o('<span class="d">(that is the last task)</span>'); return; }
     o('<span class="d">(skipped: you can come back and restart any time)</span>');
     idx++; announce();
-  };
-  document.getElementById('x-reset').onclick=function(){
-    git.reset(); idx=0; passed={}; revealed={}; fixTip=null; lostSha=null;
+  }
+  /* every action goes through here, and into the saved run */
+  function act(e){
+    if(busy&&!replaying) return false;
+    if(!replaying){ runRec.log.push(e); saveRun(); }
+    if(e[0]==='c') doRun(e[1]);
+    else if(e[0]==='e') doEdit();
+    else if(e[0]==='h') doHint();
+    else if(e[0]==='s') doSkip();
+    return true;
+  }
+
+  document.getElementById('x-edit').onclick=function(){ act(['e']); };
+  document.getElementById('x-hint').onclick=function(){ act(['h']); };
+  document.getElementById('x-skip').onclick=function(){ act(['s']); };
+  function restart(){
+    gen++; busy=false;
+    runRec=freshRun(); saveRun();
+    git=createGit({sha:seeded(runRec.seed)}); idx=0; passed={}; revealed={}; fixTip=null; lostSha=null;
     term.innerHTML=''; boot();
-  };
+  }
+  document.getElementById('x-reset').onclick=restart;
   input.addEventListener('keydown',function(ev){
-    if(ev.key==='Enter'){ run(input.value); input.value=''; }
+    if(ev.key!=='Enter') return;
+    var c=input.value.trim();
+    if(c&&act(['c',c])) input.value='';
   });
 
   function boot(){
@@ -2953,6 +3506,16 @@ function createGit(opts){
     announce();
   }
   boot();
+  if(runRec.log.length){
+    replaying=true;
+    var broke=false;
+    try{ runRec.log.forEach(act); }catch(e){ broke=true; }
+    replaying=false;
+    if(broke) restart();
+    else o('<span class="d">(picked up where you left off)</span>');
+  }
+  paintRec();
+  if(window.BADGES) BADGES.exam(rec);
 })();
 /* ===================== sidebar ===================== */
 (function(){
@@ -3005,6 +3568,8 @@ function createGit(opts){
   window.addEventListener('resize',upd,{passive:true});
   upd();
 })();
+
+if(window.BADGES) BADGES.ready();
 </script>
 </body>
 </html>

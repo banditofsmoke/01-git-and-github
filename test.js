@@ -25,6 +25,15 @@ if (!m) {
 // eslint-disable-next-line no-eval
 const createGit = eval('(function(){' + m[1] + '\nreturn createGit;})()');
 
+// The progress code's two pure functions sit between their own sentinels.
+const pm = html.match(/\/\* ==PROGRESS-CODE-START==[\s\S]*?\*\/([\s\S]*?)\/\* ==PROGRESS-CODE-END== \*\//);
+if (!pm) {
+  console.error('Could not find the PROGRESS-CODE sentinels in index.html.');
+  process.exit(1);
+}
+// eslint-disable-next-line no-eval
+const { encodeProgress, decodeProgress } = eval('(function(){' + pm[1] + '\nreturn {encodeProgress, decodeProgress};})()');
+
 /* ---------- tiny harness ---------- */
 let pass = 0, fail = 0, group = '';
 const failures = [];
@@ -777,6 +786,172 @@ describe('reset', () => {
     const s = g.snapshot();
     eq(s.init, false, 'init'); eq(s.commits, 0, 'commits');
     eq(s.hasRemote, false, 'hasRemote'); eq(s.exists, false, 'exists');
+  });
+});
+
+describe('output real git prints (captured from git 2.44, 2026-11-11)', () => {
+  it('a first push says [new branch], and the next names the real previous tip', () => {
+    const g = committed();
+    g.exec('git remote add origin https://github.com/you/git-practice.git');
+    const first = g.exec('git push -u origin main');
+    includes(first.lines, ' * [new branch]      main -> main');
+    includes(first.lines, "branch 'main' set up to track 'origin/main'.");
+    const was = g.snapshot().lastSha;
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "more"');
+    const now = g.snapshot().lastSha;
+    includes(g.exec('git push').lines, '   ' + was + '..' + now + '  main -> main');
+  });
+  it('never prints the old made-up commit id', () => {
+    const g = pushed(); g.remoteCommit();
+    excludes(g.exec('git fetch').lines, '3f2a1b0');
+    excludes(g.exec('git pull').lines, '3f2a1b0');
+  });
+  it('fetch names the address without .git, and what origin/main moved from', () => {
+    const g = pushed(); const was = g.snapshot().lastSha; g.remoteCommit();
+    const r = g.exec('git fetch');
+    includes(r.lines, 'From https://github.com/you/git-practice');
+    excludes(r.lines, 'practice.git');
+    includes(r.lines, '   ' + was + '..');
+    includes(r.lines, '  main       -> origin/main');
+  });
+  it('a fast-forward pull says Updating <your old tip>..<theirs>', () => {
+    const g = pushed(); const was = g.snapshot().lastSha; g.remoteCommit();
+    includes(g.exec('git pull').lines, 'Updating ' + was + '..');
+  });
+  it('a conflicted pull says Auto-merging first, like git', () => {
+    const g = pushed(); g.remoteCommit();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    includes(g.exec('git pull').lines, 'Auto-merging notes.txt\nCONFLICT (content): Merge conflict in notes.txt');
+  });
+  it('finishing a pulled conflict commits git\'s own merge message', () => {
+    const g = pushed(); g.remoteCommit();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    g.exec('git pull'); g.exec('git add notes.txt');
+    includes(g.exec('git commit').lines, "Merge branch 'main' of https://github.com/you/git-practice");
+  });
+  it('stash list puts the newest first, named for the branch it was made on', () => {
+    const g = committed();
+    g.exec('git switch -c experiment'); g.editFile(); g.exec('git stash');
+    g.exec('git switch main'); g.editFile(); g.exec('git stash');
+    const t = g.exec('git stash list').lines.map(l => l.t);
+    ok(/^stash@\{0\}: WIP on main: /.test(t[0]), 'newest first, got ' + t[0]);
+    ok(/^stash@\{1\}: WIP on experiment: /.test(t[1]), 'then the older one, got ' + t[1]);
+    g.exec('git stash pop');
+    ok(/^stash@\{0\}: WIP on experiment/.test(g.exec('git stash list').lines[0].t), 'pop took the newest');
+  });
+  it('the reflog uses git\'s own words, not the commands typed', () => {
+    const g = committed();
+    g.exec('git switch -c feature'); g.exec('git switch main'); g.exec('git reset --hard HEAD');
+    const t = g.exec('git reflog').lines.map(l => l.t).join('\n');
+    ok(/HEAD@\{0\}: reset: moving to HEAD/.test(t), t);
+    ok(/HEAD@\{1\}: checkout: moving from feature to main/.test(t), t);
+    ok(/HEAD@\{2\}: checkout: moving from main to feature/.test(t), t);
+    ok(/HEAD@\{3\}: commit \(initial\): first/.test(t), t);
+    ok(t.indexOf('git switch') === -1, 'no command as typed');
+  });
+  it('merge --abort with no merge says MERGE_HEAD is missing', () => {
+    includes(committed().exec('git merge --abort').lines, 'There is no merge to abort (MERGE_HEAD missing).');
+  });
+  it('after a rebase the refusal is non-fast-forward, and the lease push is a forced update', () => {
+    const g = committed();
+    g.exec('git remote add origin https://x.git'); g.exec('git push -u origin main');
+    g.exec('git switch -c feature');
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "work"');
+    g.exec('git push -u origin feature');
+    g.exec('git switch main');
+    g.editFile('todo.txt'); g.exec('git add todo.txt'); g.exec('git commit -m "main work"');
+    g.exec('git switch feature'); g.exec('git rebase main');
+    includes(g.exec('git push').lines, '(non-fast-forward)');
+    const r = g.exec('git push --force-with-lease');
+    ok(r.ok, 'lease push'); includes(r.lines, '(forced update)');
+  });
+  it('force-with-lease refuses when github moved since the last fetch', () => {
+    const g = pushed(); g.remoteCommit();
+    g.editFile(); g.exec('git add notes.txt'); g.exec('git commit -m "mine"');
+    const r = g.exec('git push --force-with-lease');
+    eq(r.ok, false); includes(r.lines, '(stale info)');
+    eq(g.snapshot().remoteOnly, 1, 'the website commit survived');
+  });
+});
+
+describe('git config', () => {
+  it('lists the settings Step 01 makes, even before git init', () => {
+    const r = fresh().exec('git config --global --list');
+    ok(r.ok);
+    includes(r.lines, 'user.name=Your Name\nuser.email=you@example.com\ninit.defaultbranch=main\npull.rebase=false');
+  });
+  it('sets a value silently, and reads it back', () => {
+    const g = fresh();
+    ok(g.exec('git config --global user.name "Ada Lovelace"').ok);
+    includes(g.exec('git config user.name').lines, 'Ada Lovelace');
+  });
+  it('says a key needs a section, like git', () => {
+    includes(fresh().exec('git config --global foo bar').lines, 'error: key does not contain a section: foo');
+  });
+  it('will not write a repository setting outside a repository', () => {
+    includes(fresh().exec('git config user.name "x"').lines, 'fatal: not in a git directory');
+  });
+});
+
+describe('pull when both sides have moved', () => {
+  function forked() {
+    const g = pushed(); g.remoteCommit();
+    g.editFile('todo.txt'); g.exec('git add todo.txt'); g.exec('git commit -m "mine"');
+    return g;
+  }
+  it('with nothing set, git stops and asks how to reconcile; --no-rebase merges', () => {
+    const g = forked();
+    g.exec('git config --global --unset pull.rebase');
+    const r = g.exec('git pull');
+    eq(r.ok, false); includes(r.lines, 'fatal: Need to specify how to reconcile divergent branches.');
+    includes(g.exec('git pull --no-rebase').lines, 'Merge made by');
+  });
+  it('set to fast-forward only, it refuses, and --no-rebase still merges', () => {
+    const g = forked();
+    g.exec('git config --global pull.ff only');
+    includes(g.exec('git pull').lines, 'fatal: Not possible to fast-forward, aborting.');
+    includes(g.exec('git pull --no-rebase').lines, 'Merge made by');
+  });
+  it('pull --rebase does not quietly merge instead', () => {
+    const r = forked().exec('git pull --rebase');
+    excludes(r.lines, 'Merge made by');
+    includes(r.lines, 'git rebase origin/main');
+  });
+});
+
+describe('progress code', () => {
+  const ids = ['00-0', '00-1', '01-0', '01-1', '01-2'];
+  const b64 = (x) => Buffer.from(typeof x === 'string' ? x : JSON.stringify(x)).toString('base64').replace(/=+$/, '');
+  it('carries ticks, quiz answers, the practical record and badges there and back', () => {
+    const p = { ticks: { '00-0': true, '01-1': true }, quiz: { 0: 1, 3: 2 },
+                rec: { best: 9, all: '2026-11-11' }, flags: { init: true, cloud: true },
+                days: ['2026-11-10', '2026-11-11'] };
+    const back = decodeProgress(encodeProgress(p, ids), ids);
+    eq(back.ticks, { '00-0': true, '01-1': true }, 'ticks');
+    eq(back.quiz, { 0: 1, 3: 2 }, 'quiz');
+    eq(back.rec, { best: 9, all: '2026-11-11' }, 'record');
+    eq(back.flags, { cloud: true, init: true }, 'badges');
+    eq(back.days, ['2026-11-10', '2026-11-11'], 'days');
+  });
+  it('still takes a code from before, which was the ticks map alone', () => {
+    eq(decodeProgress(b64({ '00-0': true, '01-2': true, '01-1': false }), ids).ticks, { '00-0': true, '01-2': true });
+  });
+  it('refuses a code that decodes to a list', () => {
+    eq(decodeProgress(b64([1, 2, 3]), ids), null);
+    eq(decodeProgress(b64({ v: 2, t: '1', f: 'init' }), ids), null, 'badges as a string');
+  });
+  it('refuses junk, a bare string, a version it does not know, and keys that are not steps', () => {
+    eq(decodeProgress('not a code!', ids), null);
+    eq(decodeProgress(b64('"hello"'), ids), null);
+    eq(decodeProgress(b64({ v: 3, t: '1' }), ids), null);
+    eq(decodeProgress(b64({ x: 1 }), ids), null);
+  });
+  it('does not mind spaces or line breaks pasted into it', () => {
+    const code = encodeProgress({ ticks: { '01-2': true } }, ids);
+    eq(decodeProgress(' ' + code.slice(0, 5) + '\n' + code.slice(5) + ' ', ids).ticks, { '01-2': true });
+  });
+  it('stays short for somebody just starting', () => {
+    ok(encodeProgress({ ticks: { '00-0': true } }, ids).length < 24, 'short');
   });
 });
 
